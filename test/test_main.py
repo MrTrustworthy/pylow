@@ -1,9 +1,11 @@
+import os
 import pathlib
+import sys
 import unittest
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import pylow
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import pylow  # noqa
+
 
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
 
@@ -110,43 +112,43 @@ class MainTest(unittest.TestCase):
         config = ConfigTest().test_0_1_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_0_1', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_0_1', wait=True)
 
     def test_example_0_2(self):
         config = ConfigTest().test_0_2_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_0_2', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_0_2', wait=True)
 
     def test_example_1_1(self):
         config = ConfigTest().test_1_1_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_1_1', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_1_1', wait=True)
 
     def test_example_2_1(self):
         config = ConfigTest().test_2_1_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_2_1', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_2_1', wait=True)
 
     def test_example_1_2(self):
         config = ConfigTest().test_1_2_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_1_2', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_1_2', wait=True)
 
     def test_example_2_2(self):
         config = ConfigTest().test_2_2_config()
         ds = pylow.Datasource.from_csv(self.test_file.absolute())
         plotter = pylow.Plotter(ds, config)
-        frame = plotter.create_figure()
-        plotter.display(frame, export_file='test/data/temp/test_2_2', wait=True)
+        plotter.create_figure()
+        plotter.display(export_file='test/data/temp/test_2_2', wait=True)
 
     def test_config_constructor(self):
         conf = pylow.plot_config.PlotConfig()
