@@ -1,49 +1,42 @@
 
-import pandas as pd
+from typing import Callable, Optional
 
+import pandas
 
 
 class Datasource:
 
-    def __init__(self, data):
+    def __init__(self, data: pandas.DataFrame) -> None:
         self.data = data
-        self.aspects = {}
         self._add_noc()
 
-    def add_column(self, name, formula):
+    def add_column(self, name: str, formula: Callable) -> None:
         self.data[name] = formula(self.data)
 
-    def _add_noc(self):
+    def _add_noc(self) -> None:
         self.add_column('Number of records', lambda x: 1)
 
-    def _guess_aspects(self):
-        self.aspects = {}
-        for column in self.data.columns:
-            o_type = self.data[column].dtype.name
-            self.aspects[column] = 'measure' if o_type in ('int64', 'float64') else 'dimension'
-
-    def _guess_types(self):
+    def _guess_types(self) -> None:
         for column in self.data.columns:
             try:
-                self.data[column] = pd.to_numeric(self.data[column])
+                self.data[column] = pandas.to_numeric(self.data[column])
             except ValueError:
                 try:
-                    self.data[column] = pd.to_datetime(self.data[column])
+                    self.data[column] = pandas.to_datetime(self.data[column])
                 except ValueError:
                     pass
 
     @classmethod
-    def from_csv(cls, filename, options=None):
+    def from_csv(cls, filename: str, options: Optional[dict]=None) -> 'Datasource':
         if options is None:
             options = options = {
                 'delimiter': ',',
                 'quotechar': '"',
                 'escapechar': '\\'
             }
-        data = pd.read_csv(filename, **options)
+        data = pandas.read_csv(filename, **options)
         ds = cls(data)
         ds._guess_types()
-        ds._guess_aspects()
         return ds
 
 if __name__ == '__main__':

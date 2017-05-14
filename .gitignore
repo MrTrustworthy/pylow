@@ -1,6 +1,7 @@
 # Custom - generated test files
 test/data/temp/
-
+# Custom - mypy cache
+.mypy_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
