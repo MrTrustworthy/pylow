@@ -1,9 +1,17 @@
 from collections import namedtuple
+from itertools import chain
+class Attribute:
+    def __init__(self, col_name):
+        self.col_name = col_name
 
 Dimension = namedtuple('Dimension', ['col_name'])
 
+class Dimension(Attribute):
 
-class Measure:
+    def __init__(self, col_name:str):
+        super().__init__(col_name)
+
+class Measure(Attribute):
 
     def __init__(
         self,
@@ -12,13 +20,13 @@ class Measure:
         aggregation: str='sum',
         draw_type: str='plot',
         color: str='b',
-        options: dict={}
+        double_axis: bool=False,
     )-> None:
-        self.col_name = col_name
+        super().__init__(col_name)
         self.aggregation = aggregation
         self.draw_type = draw_type
         self.color = color
-        self.options = options.copy()
+        self.double_axis = double_axis # TODO use this
 
 
 class PlotConfig:
@@ -26,16 +34,44 @@ class PlotConfig:
     def __init__(self):
 
         # all non-writeable properties to ensure lists don't get switched out
-        self._dimensions = []
-        self._measures = []
+        self._columns = []
+        self._rows = []
+        self.colors = []
+        self.tooltips = []
+
+    @property
+    def columns(self) -> list:
+        return self._columns
+
+    @property
+    def rows(self) -> list:
+        return self._rows
 
     @property
     def dimensions(self) -> list:
-        return self._dimensions
+        return self._find_attrs(chain(self.columns, self.rows), Dimension)
 
     @property
     def measures(self) -> list:
-        return self._measures
+        return self._find_attrs(chain(self.columns, self.rows), Measure)
+
+    @property
+    def column_dimensions(self) -> list:
+        return self._find_attrs(self.columns, Dimension)
+    @property
+    def row_dimensions(self) -> list:
+        return self._find_attrs(self.rows, Dimension)
+
+    @property
+    def column_measures(self) -> list:
+        return self._find_attrs(self.columns, Measure)
+    @property
+    def row_measures(self) -> list:
+        return self._find_attrs(self.rows, Measure)
+
+    def _find_attrs(self, iterable, attr_class):
+        return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
+
 
     def is_valid_config(self):
         # TODO Validate by checking if equal amounts of measures & colors or smth are there
@@ -51,7 +87,6 @@ class PlotConfig:
     @classmethod
     def from_dict(cls, _dict: dict) -> 'PlotConfig':
         pc = cls()
-        for key, value in _dict.items():
-            for item in value:
-                getattr(pc, key).append(item)
+        pc.columns.extend(_dict['columns'])
+        pc.rows.extend(_dict['rows'])
         return pc

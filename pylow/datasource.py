@@ -17,6 +17,7 @@ class Datasource:
         self.add_column('Number of records', lambda x: 1)
 
     def _guess_types(self) -> None:
+        # TODO handle fields with percentage signs
         for column in self.data.columns:
             try:
                 self.data[column] = pandas.to_numeric(self.data[column])
@@ -30,7 +31,7 @@ class Datasource:
     def from_csv(cls, filename: str, options: Optional[dict]=None) -> 'Datasource':
         if options is None:
             options = options = {
-                'delimiter': ',',
+                'delimiter': ';',
                 'quotechar': '"',
                 'escapechar': '\\'
             }
