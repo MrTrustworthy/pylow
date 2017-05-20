@@ -1,7 +1,7 @@
 
 import pathlib
 from itertools import chain
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Union
 
 from bokeh.io import output_notebook, show
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
@@ -10,7 +10,7 @@ from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
                           SingleIntervalTicker)
 from bokeh.models.glyphs import Circle, Text
 from bokeh.sampledata.sprint import sprint
-
+from . import Attribute, Measure, Dimension
 
 class BokehPlotter:
 
@@ -20,43 +20,64 @@ class BokehPlotter:
 
     def create_viz(self):
 
-        column = self.config.column_dimensions[0]
-        measure = self.config.row_measures[0]
-        data, labels = self.get_data()
-        source = ColumnDataSource(data=data)
-        print('Data is', data)
-        x_range = FactorRange(*labels)
+        dimension = self.config.dimensions[0]
+        measure = self.config.measures[0]
 
-        measure_data = data[measure.col_name]
-        _min, _max = min(measure_data), max(measure_data)
-        _extra_range = (_max - _min) * 0.2
-        y_range = Range1d(_min - _extra_range, _max + _extra_range)
+        data, labels = self.get_data(measure)
+        source = ColumnDataSource(data=data)
+
+        print('data', data, '\n', 'labels', labels)
+
+        x_r, y_r = self.get_dimension_range(data, dimension), self.get_measure_range(data, measure)
+        if measure in self.config.columns:
+            x_r, y_r = y_r, x_r
 
         options = {'plot_width': 800, 'plot_height': 480, 'toolbar_location': None, 'outline_line_color': None}
-        self.plot = Plot(x_range=x_range, y_range=y_range, **options)
+        self.plot = Plot(x_range=x_r, y_range=y_r, **options)
 
+        for attribute in (dimension, measure):
+            self.draw_axes(attribute)
+
+        x_n, y_n = dimension.col_name, measure.col_name
+        if measure in self.config.columns:
+            x_n, y_n = y_n, x_n
         radius = dict(value=5, units='screen')
-        glyph = Circle(x=column.col_name, y=measure.col_name, radius=radius)
+        glyph = Circle(x=x_n, y=y_n, radius=radius)
         # glyph = Line(x='Category', y='Quantity')
 
         renderer = self.plot.add_glyph(source, glyph)
 
-        # x-axis
-        yticker = BasicTicker(num_minor_ticks=0)
-        yaxis = LinearAxis(ticker=yticker, axis_label=measure.col_name)
-        self.plot.add_layout(yaxis, 'right')
-        ygrid = Grid(dimension=0, ticker=yaxis.ticker, grid_line_dash='dashed')
-        self.plot.add_layout(ygrid)
-
-        xticker = CategoricalTicker(name=column.col_name)
-        xaxis = CategoricalAxis(ticker=xticker, axis_label=column.col_name, major_tick_in=-5, major_tick_out=10)
-        self.plot.add_layout(xaxis, 'below')
-
         self.add_tooltips(renderer)
 
-    def get_data(self) -> Tuple[ColumnDataSource, List[str]]:
-        measure = self.config.row_measures[0]  # TODO iterate
-        dimensions = [c.col_name for c in self.config.column_dimensions]
+    def get_dimension_range(self, data, dimension):
+        return FactorRange(*data[dimension.col_name])
+
+    def get_measure_range(self, data, measure, *, buffer=0.2):
+        measure_data = data[measure.col_name]
+        _min, _max = min(measure_data), max(measure_data)
+        _extra_range = (_max - _min) * buffer
+        range = Range1d(_min - _extra_range, _max + _extra_range)
+        return range
+
+
+
+    def draw_axes(self, attribute):
+        orientation = 'below' if attribute in self.config.columns else 'left'
+        self.draw_axis(attribute, orientation)
+
+    def draw_axis(self, object: Attribute, position: str):
+
+        ticker = BasicTicker(num_minor_ticks=0) if isinstance(object, Measure) else CategoricalTicker()
+        options = {'ticker': ticker, 'axis_label': object.col_name}
+        axis_constructor = LinearAxis if isinstance(object, Measure) else CategoricalAxis
+        axis = axis_constructor(**options)
+        self.plot.add_layout(axis, position)
+        # ygrid = Grid(dimension=0, ticker=yaxis.ticker, grid_line_dash='dashed')
+        # self.plot.add_layout(ygrid)
+
+
+    def get_data(self, measure) -> Dict[str, List[Union[str, int, float]]]:
+        dimensions = [c.col_name for c in self.config.dimensions]
         grouped_data = self.datasource.data.groupby(dimensions)
         grouped_measure = grouped_data[measure.col_name]
         aggregated_data = getattr(grouped_measure, measure.aggregation)().to_dict()  # is a pandas object
@@ -76,10 +97,10 @@ class BokehPlotter:
     def add_tooltips(self, renderer):
 
         column_template = '<span style="font-size: 10px; color: #666;">(@{{{}}})</span>'
-        columns = '\n'.join(column_template.format(d.col_name) for d in self.config.column_dimensions)
+        columns = '\n'.join(column_template.format(d.col_name) for d in self.config.dimensions)
         # double-braces to escape the brace character, around another brace to encapsule columns with spaces
         measure_template = '<span style="font-size: 15px;">@{{{}}}</span>&nbsp;'
-        measures = '\n'.join(measure_template.format(m.col_name) for m in self.config.row_measures)
+        measures = '\n'.join(measure_template.format(m.col_name) for m in self.config.measures)
         infos = measures + '<br>' + columns
         tooltip = f'<div>{infos}<div>'
 

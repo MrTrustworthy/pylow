@@ -1,15 +1,24 @@
 from collections import namedtuple
 from itertools import chain
+
+
 class Attribute:
+
     def __init__(self, col_name):
         self.col_name = col_name
 
-Dimension = namedtuple('Dimension', ['col_name'])
+    def __str__(self):
+        return self.col_name
+
+    def __repr__(self):
+        return f'<Attribute> {self.col_name}'
+
 
 class Dimension(Attribute):
 
-    def __init__(self, col_name:str):
+    def __init__(self, col_name: str):
         super().__init__(col_name)
+
 
 class Measure(Attribute):
 
@@ -26,7 +35,7 @@ class Measure(Attribute):
         self.aggregation = aggregation
         self.draw_type = draw_type
         self.color = color
-        self.double_axis = double_axis # TODO use this
+        self.double_axis = double_axis  # TODO use this
 
 
 class PlotConfig:
@@ -58,6 +67,7 @@ class PlotConfig:
     @property
     def column_dimensions(self) -> list:
         return self._find_attrs(self.columns, Dimension)
+
     @property
     def row_dimensions(self) -> list:
         return self._find_attrs(self.rows, Dimension)
@@ -65,13 +75,13 @@ class PlotConfig:
     @property
     def column_measures(self) -> list:
         return self._find_attrs(self.columns, Measure)
+
     @property
     def row_measures(self) -> list:
         return self._find_attrs(self.rows, Measure)
 
     def _find_attrs(self, iterable, attr_class):
         return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
-
 
     def is_valid_config(self):
         # TODO Validate by checking if equal amounts of measures & colors or smth are there
