@@ -12,8 +12,8 @@ TEST_FILE = TESTDATA_PATH / 'testdata_min.csv'
 
 # Format Column<x dimensions, y measures> Rows<x dimensions, y measures>
 CONF_1d0m_0d1m = {
-    'columns': [pylow.Dimension('Category')],
-    'rows': [pylow.Measure('Quantity', draw_type='plot', color='red')]
+    'columns': [pylow.Dimension('Region')],
+    'rows': [pylow.Measure('Number of records', draw_type='plot', color='red')]
 }
 CONF_2d0m_1m0d = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
@@ -22,7 +22,7 @@ CONF_2d0m_1m0d = {
 
 CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     (CONF_1d0m_0d1m, 1, 1),
-    (CONF_2d0m_1m0d, 2, 1),
+    # (CONF_2d0m_1m0d, 2, 1),
     # (CONF_2_2, 2, 2),
 ])
 
