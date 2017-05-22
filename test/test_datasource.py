@@ -48,5 +48,9 @@ def test_datasource_from_file_calcs_3():
     number = ds.data['Test Quantity'][:-200].mean()
     assert number == target_sum
 
+def test_datasource_data_preparation():
+    ds = pylow.Datasource.from_csv(TEST_FILE.absolute())
+
+
 if __name__ == '__main__':
-    pytest.main()
+    pytest.main(['-s'])

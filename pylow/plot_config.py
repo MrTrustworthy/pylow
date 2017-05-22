@@ -38,7 +38,7 @@ class Measure(Attribute):
         self.double_axis = double_axis  # TODO use this
 
 
-class PlotConfig:
+class VizConfig:
 
     def __init__(self):
 
@@ -95,7 +95,7 @@ class PlotConfig:
                 getattr(self, prop).clear()
 
     @classmethod
-    def from_dict(cls, _dict: dict) -> 'PlotConfig':
+    def from_dict(cls, _dict: dict) -> 'VizConfig':
         pc = cls()
         pc.columns.extend(_dict['columns'])
         pc.rows.extend(_dict['rows'])

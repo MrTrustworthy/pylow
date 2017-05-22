@@ -1,9 +1,9 @@
 
-from typing import Callable, List, Optional, Generator, Tuple
+from typing import Callable, List, Optional, Generator, Tuple, Union
 
 import pandas
 
-from . import Dimension, Measure
+from .plot_config import VizConfig, Dimension, Measure, Attribute
 
 
 class Datasource:
@@ -29,18 +29,11 @@ class Datasource:
                 except ValueError:
                     pass
 
-    def get_prepared_data(
-        self,
-        dimensions: List[Dimension],
-        measures: List[Measure]
-    ) -> Generator[Tuple[Measure, 'pandas.Series'], None, None]:
 
-        dimension_names = [d.col_name for d in dimensions]
-        grouped_data = self.data.groupby(dimension_names)
-        for measure in measures:
-            grouped_measure = grouped_data[measure.col_name]
-            aggregated_data = getattr(grouped_measure, measure.aggregation)().to_dict()  # is a pandas object
-            yield measure, aggregated_data
+
+    def get_variations_of(self, column: Union[str, Attribute]):
+        col = getattr(column, 'col_name', column)
+        return list(set(self.data[col]))
 
     @classmethod
     def from_csv(cls, filename: str, options: Optional[dict]=None) -> 'Datasource':

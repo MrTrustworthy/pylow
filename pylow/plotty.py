@@ -9,7 +9,7 @@ import numpy as np
 import pandas
 
 from .datasource import Datasource
-from .plot_config import Dimension, Measure, PlotConfig
+from .plot_config import Dimension, Measure, VizConfig
 
 
 def unique_list(seq: Sequence) -> List[Any]:
@@ -66,7 +66,7 @@ def get_element_color(element: matplotlib.artist.Artist) -> Any:
 
 class Plotter:
 
-    def __init__(self, datasource: Datasource, config: PlotConfig) -> None:
+    def __init__(self, datasource: Datasource, config: VizConfig) -> None:
         self.datasource = datasource
         self.config = config
         self.artists = []  # type: List[matplotlib.artist.Artist]
@@ -319,13 +319,13 @@ if __name__ == '__main__':
         'dimensions': [Dimension('Product')],
         'measures': [Measure('Price', color='r')]
     }
-    config = PlotConfig.from_dict(d)
+    config = VizConfig.from_dict(d)
 
     d2 = {
         'dimensions': [Dimension('Product'), Dimension('Payment_Type')],
         'measures': [Measure('Price', draw_type='bar')]
     }
-    config2 = PlotConfig.from_dict(d2)
+    config2 = VizConfig.from_dict(d2)
 
     ds = Datasource.from_csv('test/data/SalesJan2009.csv')
 

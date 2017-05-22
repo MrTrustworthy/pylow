@@ -39,13 +39,13 @@ CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
 
 @CONFIG_ROTATE
 def test_config_builder(config, dimensions, measures):
-    pc = pylow.PlotConfig.from_dict(config)
+    pc = pylow.VizConfig.from_dict(config)
     assert len(pc.dimensions) == dimensions
     assert len(pc.measures) == measures
 
 @CONFIG_ROTATE
 def test_example(config, dimensions, measures):
-    pc = pylow.PlotConfig.from_dict(config)
+    pc = pylow.VizConfig.from_dict(config)
     ds = pylow.Datasource.from_csv(TEST_FILE.absolute())
     plotter = pylow.BokehPlotter(ds, pc)
     plotter.create_viz()
