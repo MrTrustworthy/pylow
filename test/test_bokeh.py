@@ -8,27 +8,32 @@ import pylow  # noqa
 
 
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
-TEST_FILE = TESTDATA_PATH / 'testdata_min.csv'
+TEST_FILE = TESTDATA_PATH / 'testdata.csv'
 
 # Format Column<x dimensions, y measures> Rows<x dimensions, y measures>
 CONF_1d0m_0d1m = {
     'columns': [pylow.Dimension('Category')],
-    'rows': [pylow.Measure('Number of records', draw_type='plot', color='red')]
+    'rows': [pylow.Measure('Number of records')]
 }
 CONF_0d1m_1d0m = {
-    'columns': [pylow.Measure('Number of records', draw_type='plot', color='red')],
+    'columns': [pylow.Measure('Number of records')],
     'rows': [pylow.Dimension('Category')]
 }
-CONF_2d0m_1m0d = {
+CONF_2d0m_0d1m = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
-    'rows': [pylow.Measure('Quantity', draw_type='plot', color='blue')]
+    'rows': [pylow.Measure('Quantity')]
+}
+
+CONF_2d0m_1d1m = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')]
 }
 
 CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
-    (CONF_1d0m_0d1m, 1, 1),
-    (CONF_0d1m_1d0m, 1, 1),
-    #(CONF_2d0m_1m0d, 2, 1),
-    # (CONF_2_2, 2, 2),
+    # (CONF_1d0m_0d1m, 1, 1),
+    # (CONF_0d1m_1d0m, 1, 1),
+    #(CONF_2d0m_0d1m, 2, 1),
+    (CONF_2d0m_1d1m, 3, 1),
 ])
 
 

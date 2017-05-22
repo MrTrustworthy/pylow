@@ -11,7 +11,7 @@ class Attribute:
         return self.col_name
 
     def __repr__(self):
-        return f'<Attribute> {self.col_name}'
+        return f'<plot_config.{type(self).__name__}: {self.col_name}>'
 
 
 class Dimension(Attribute):
