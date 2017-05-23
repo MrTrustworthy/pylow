@@ -1,10 +1,11 @@
 import os
 import pathlib
 import sys
-import pytest
 from time import sleep
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pylow  # noqa
+import pytest
 
 
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
@@ -32,7 +33,7 @@ CONF_2d0m_1d1m = {
 CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     # (CONF_1d0m_0d1m, 1, 1),
     # (CONF_0d1m_1d0m, 1, 1),
-    #(CONF_2d0m_0d1m, 2, 1),
+    # (CONF_2d0m_0d1m, 2, 1),
     (CONF_2d0m_1d1m, 3, 1),
 ])
 
@@ -42,6 +43,7 @@ def test_config_builder(config, dimensions, measures):
     pc = pylow.VizConfig.from_dict(config)
     assert len(pc.dimensions) == dimensions
     assert len(pc.measures) == measures
+
 
 @CONFIG_ROTATE
 def test_example(config, dimensions, measures):

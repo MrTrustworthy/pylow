@@ -24,28 +24,60 @@ AVP = namedtuple('AVP', ['attr', 'val'])
 
 class PlotInfo:
 
-    def __init__(self,
-                 x_coords: AVP = None,
-                 y_coords: AVP = None,
-                 x_seps: List[AVP] = None,
-                 y_seps: List[AVP] = None
-                 ):
+    _point_list = []  # TODO add context manager to clear automatically?
+
+    def __init__(
+        self,
+        x_coords: List[AVP] = None,
+        y_coords: List[AVP] = None,
+        x_seps: List[AVP] = None,
+        y_seps: List[AVP] = None
+    ):
         self.x_coords = x_coords
         self.y_coords = y_coords
         self.x_seps = x_seps
         self.y_seps = y_seps
 
+    @classmethod
+    def create_new_or_update(
+        cls,
+        x_coords: List[AVP] = None,
+        y_coords: List[AVP] = None,
+        x_seps: List[AVP] = None,
+        y_seps: List[AVP] = None
+    ):
+        new = cls(x_coords, y_coords, x_seps, y_seps)
+        existing_objects = list(filter(lambda ppi: ppi.same_group(new), cls._point_list))
+        if len(existing_objects) == 0:
+            cls._point_list.append(new)
+            return new
+        elif len(existing_objects) == 1:
+            existing = existing_objects[0]
+            existing.x_coords.extend(x_coords)
+            existing.y_coords.extend(y_coords)
+            return existing
+        assert False
+
+    @classmethod
+    def clear_point_cache(cls) ->None:
+        cls._point_list.clear()
+
+    def same_group(self, other: 'PlotInfo'):
+        return self.x_seps == other.x_seps and self.y_seps == other.y_seps
+
     def __str__(self):
-        return f'[{self.x_coords.val}:{self.y_coords.val}] (seps_x:{self.x_seps}, seps_y:{self.y_seps})'
+        return f'<{[x.val for x in self.x_coords]}:{[x.val for x in self.y_coords]}> (seps_x:{self.x_seps}, seps_y:{self.y_seps})'
 
     def __repr__(self):
         return str(self)
+
 
 class Aggregator:
 
     def __init__(self, datasource: Datasource, config: VizConfig):
         self.datasource = datasource
         self.config = config
+
         self.all_attrs = list(chain(self.config.dimensions, self.config.measures))
 
         self.previous_columns = self.config.columns[:-1]
@@ -57,16 +89,17 @@ class Aggregator:
     def get_data(self) -> List[PlotInfo]:
         data = self.get_prepared_data()
         prepared = self.get_assigned_data(data)
-        out = [self.make_plot_info(d) for d in prepared]
+        out = list(set(self.make_plot_info(d) for d in prepared))  # may yield duplicates
+        PlotInfo.clear_point_cache()
         return out
 
     def make_plot_info(self, plot_data: List[AVP]) -> PlotInfo:
 
-        x_coords = plot_data[self.all_attrs.index(self.last_column)]
-        y_coords = plot_data[self.all_attrs.index(self.last_row)]
+        x_coords = [plot_data[self.all_attrs.index(self.last_column)]]
+        y_coords = [plot_data[self.all_attrs.index(self.last_row)]]
         x_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_columns]
         y_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_rows]
-        plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps)
+        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
         return plotinfo
 
     def get_assigned_data(self, data) -> List[List[AVP]]:
@@ -101,75 +134,140 @@ class BokehPlotter:
     def __init__(self, datasource, config):
         self.datasource = datasource
         self.config = config
+        self.aggregator = Aggregator(datasource, config)
         self.plots = []
+        self.ncols = None
 
     def create_viz(self):
-        aggregator = Aggregator(self.datasource, self.config)
-        data = aggregator.get_data()
-        # TODO create VIZ_INFO object from that data
-        print('data', data)
+        data = self.aggregator.get_data()
 
-        return
+        # TODO move to container library
+        self.ncols = self.calculate_ncols(data)
+        self.nrows = len(data) / self.ncols
 
-        measure, dataset = data[0]
+        x_vals = [avp.val for pi in data for avp in pi.x_coords]
+        self.x_min, self.x_max = min(x_vals), max(x_vals)
+        y_vals = [avp.val for pi in data for avp in pi.y_coords]
+        self.y_min, self.y_max = min(y_vals), max(y_vals)
 
-        for row_tuple, column_data in self.get_column_data(dataset).items():
-            plot = self.make_column_plot(row_tuple, column_data)
+        print('VALUES', self.x_min, self.x_max, self.y_min, self.y_max)
+
+        for plotinfo in data:
+            plot = self.make_plot(plotinfo)
             self.plots.append(plot)
 
-    def get_column_data(self, data) -> Dict[Tuple[str], List[Tuple[Tuple[str], int]]]:
-        col_amount = len(self.config.column_dimensions)
+    def make_plot(self, plot_info: PlotInfo):
 
-        out = defaultdict(list)
-
-        for key_tuple, value in data.items():
-            col_tuple, row_tuple = key_tuple[:col_amount], key_tuple[col_amount:]
-            out[row_tuple].append((col_tuple, value))
-        return out
-
-    def make_column_plot(self, row_tuple: Tuple[str], column_data: List[Tuple[Tuple[str], int]]):
-
+        x_colname = plot_info.x_coords[0].attr.col_name
+        y_colname = plot_info.y_coords[0].attr.col_name
         data = {
-            'key': ['/'.join(t[0]) for t in column_data],
-            'val': [t[1] for t in column_data]
+            x_colname: [avp.val for avp in plot_info.x_coords],
+            y_colname: [avp.val for avp in plot_info.y_coords],
         }
 
         source = ColumnDataSource(data=data)
         # ranges
-        x_r, y_r = FactorRange(*data['key']), Range1d(min(data['val']), max(data['val']))
-        options = {'plot_width': 1000, 'plot_height': 500, 'toolbar_location': None, 'outline_line_color': '#00FF00'}
-        plot = Plot(x_range=x_r, y_range=y_r, **options)
+        x_r, y_r = self.get_range(plot_info, 'x'), self.get_range(plot_info, 'y')
 
-        extra_data = {}
-        for i in range(len(column_data[0][0])):
-            amount = (0 if i == 0 else 2) + 1  # FIXME must depend on previous amounts :/
-            unique_values = list(set([t[0][i] for t in column_data]))
-            labels_to_show = make_unique_string_list(unique_values * amount)
-            extra_data['key_label_' + str(i)] = FactorRange(*labels_to_show)
+        options = {
+            'plot_width': int(1200 / self.ncols),
+            'plot_height': int(800 / self.nrows),
+            'toolbar_location': None,
+            'x_range': x_r,
+            'y_range': y_r,
+        }
+        plot = Plot(**options)
+        plot.title.text = plot_info.x_seps[-1].val  # also see title_location
 
-        plot.extra_x_ranges = extra_data
+        x_ax, y_ax = self.get_axis(plot_info, 'x'), self.get_axis(plot_info, 'y')
+        plot.add_layout(x_ax, 'above')
+        plot.add_layout(y_ax, 'left')
 
         radius = dict(value=5, units='screen')
-        glyph = Circle(x='key', y='val', radius=radius)
+        glyph = Circle(x=x_colname, y=y_colname, radius=radius)
         renderer = plot.add_glyph(source, glyph)
-        self.add_axes(plot, column_data)
+        # self.add_axes(plot, column_data)
         return plot
 
-    def add_axes(self, plot, data):
-        dimension_amount = len(data[0][0])
-        reverse_indicies = list(range(dimension_amount))[::-1]
-        for i, orientation in zip(reverse_indicies, ('below', 'above', 'above', 'above')):
-            x_ticker = CategoricalTicker()
-            x_axis = CategoricalAxis(ticker=x_ticker, axis_label=str(i), x_range_name='key_label_' + str(i))
-            plot.add_layout(x_axis, orientation)
+    def get_range(self, data: PlotInfo, axis: str):
+        values = [avp.val for avp in getattr(data, f'{axis}_coords')]
+        if isinstance(values[0], str):
+            return FactorRange(*values)
+        else:
+            _min, _max = getattr(self, f'{axis}_min'), getattr(self, f'{axis}_max')
+            return Range1d(_min, _max)
 
-        y_ticker = BasicTicker(num_minor_ticks=0)
-        y_axis = LinearAxis(ticker=y_ticker, axis_label='val')
-        plot.add_layout(y_axis, 'left')
+    def get_axis(self, data: PlotInfo, axis: str):
+        values = [avp.val for avp in getattr(data, f'{axis}_coords')]
+        label = [avp.attr for avp in getattr(data, f'{axis}_coords')][0].col_name
+        if isinstance(values[0], str):
+            ticker = CategoricalTicker()
+            axis = CategoricalAxis(ticker=ticker, axis_label=label)
+            return axis
+        else:
+            ticker = BasicTicker(num_minor_ticks=0)
+            axis = LinearAxis(ticker=ticker, axis_label=label)
+            return axis
+
+    def calculate_ncols(self, data):
+        column_possibilities = []
+        for avp in data[0].x_seps:
+            possibilities = len(self.datasource.get_variations_of(avp.attr))
+            column_possibilities.append(possibilities)
+        ncols = reduce(lambda x, y: x + y, column_possibilities)
+        return ncols
 
     def display(self, *, export_file=None, wait=False):
-        return
-        print('plots:', len(self.plots))
-        # x_length = len(list(chain(*[self.get_values_from(dim) for dim in self.config.column_dimensions])))
-        grid = gridplot(self.plots, ncols=1)
+        grid = gridplot(self.plots, ncols=self.ncols)
         show(grid)
+
+    # def add_axes(self, plot, data):
+    #     dimension_amount = len(data[0][0])
+    #     reverse_indicies = list(range(dimension_amount))[::-1]
+    #     for i, orientation in zip(reverse_indicies, ('below', 'above', 'above', 'above')):
+    #         x_ticker =
+    #         plot.add_layout(x_axis, orientation)
+    #
+    #     y_ticker = BasicTicker(num_minor_ticks=0)
+    #     y_axis = LinearAxis(ticker=y_ticker, axis_label='val')
+    #     plot.add_layout(y_axis, 'left')
+
+    #
+    # def get_column_data(self, data) -> Dict[Tuple[str], List[Tuple[Tuple[str], int]]]:
+    #     col_amount = len(self.config.column_dimensions)
+    #
+    #     out = defaultdict(list)
+    #
+    #     for key_tuple, value in data.items():
+    #         col_tuple, row_tuple = key_tuple[:col_amount], key_tuple[col_amount:]
+    #         out[row_tuple].append((col_tuple, value))
+    #     return out
+    #
+    # def make_column_plot(self, row_tuple: Tuple[str], column_data: List[Tuple[Tuple[str], int]]):
+    #
+    #     data = {
+    #         'key': ['/'.join(t[0]) for t in column_data],
+    #         'val': [t[1] for t in column_data]
+    #     }
+    #
+    #     source = ColumnDataSource(data=data)
+    #     # ranges
+    #     x_r, y_r = FactorRange(*data['key']), Range1d(min(data['val']), max(data['val']))
+    #     options = {'plot_width': 1000, 'plot_height': 500, 'toolbar_location': None, 'outline_line_color': '#00FF00'}
+    #     plot = Plot(x_range=x_r, y_range=y_r, **options)
+    #
+    #     extra_data = {}
+    #     for i in range(len(column_data[0][0])):
+    #         amount = (0 if i == 0 else 2) + 1  # FIXME must depend on previous amounts :/
+    #         unique_values = list(set([t[0][i] for t in column_data]))
+    #         labels_to_show = make_unique_string_list(unique_values * amount)
+    #         extra_data['key_label_' + str(i)] = FactorRange(*labels_to_show)
+    #
+    #     plot.extra_x_ranges = extra_data
+    #
+    #     radius = dict(value=5, units='screen')
+    #     glyph = Circle(x='key', y='val', radius=radius)
+    #     renderer = plot.add_glyph(source, glyph)
+    #     self.add_axes(plot, column_data)
+    #     return plot
+    #
