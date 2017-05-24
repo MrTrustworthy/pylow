@@ -16,141 +16,20 @@ from bokeh.sampledata.sprint import sprint
 
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
+from .plotinfo import AVP, PlotInfo
+from .aggregator import Aggregator
 from .utils import make_unique_string_list
-
-# attribute_value pair
-AVP = namedtuple('AVP', ['attr', 'val'])
-
-
-class PlotInfo:
-
-    _point_list = []  # TODO add context manager to clear automatically?
-
-    def __init__(
-        self,
-        x_coords: List[AVP] = None,
-        y_coords: List[AVP] = None,
-        x_seps: List[AVP] = None,
-        y_seps: List[AVP] = None
-    ):
-        self.x_coords = x_coords
-        self.y_coords = y_coords
-        self.x_seps = x_seps
-        self.y_seps = y_seps
-
-    @classmethod
-    def create_new_or_update(
-        cls,
-        x_coords: List[AVP] = None,
-        y_coords: List[AVP] = None,
-        x_seps: List[AVP] = None,
-        y_seps: List[AVP] = None
-    ):
-        new = cls(x_coords, y_coords, x_seps, y_seps)
-        existing_objects = list(filter(lambda ppi: ppi.same_group(new), cls._point_list))
-        if len(existing_objects) == 0:
-            cls._point_list.append(new)
-            return new
-        elif len(existing_objects) == 1:
-            existing = existing_objects[0]
-            existing.x_coords.extend(x_coords)
-            existing.y_coords.extend(y_coords)
-            return existing
-        assert False
-
-    @classmethod
-    def clear_point_cache(cls) ->None:
-        cls._point_list.clear()
-
-    def same_group(self, other: 'PlotInfo'):
-        return self.x_seps == other.x_seps and self.y_seps == other.y_seps
-
-    def __str__(self):
-        return f'<{[x.val for x in self.x_coords]}:{[x.val for x in self.y_coords]}> (seps_x:{self.x_seps}, seps_y:{self.y_seps})'
-
-    def __repr__(self):
-        return str(self)
-
-
-class Aggregator:
-
-    def __init__(self, datasource: Datasource, config: VizConfig):
-        self.datasource = datasource
-        self.config = config
-
-        self.all_attrs = list(chain(self.config.dimensions, self.config.measures))
-
-        self.previous_columns = self.config.columns[:-1]
-        self.last_column = self.config.columns[-1]
-
-        self.previous_rows = self.config.rows[:-1]
-        self.last_row = self.config.rows[-1]
-
-    def get_data(self) -> List[PlotInfo]:
-        data = self.get_prepared_data()
-        prepared = self.get_assigned_data(data)
-        out = list(set(self.make_plot_info(d) for d in prepared))  # may yield duplicates
-        PlotInfo.clear_point_cache()
-        return out
-
-    def make_plot_info(self, plot_data: List[AVP]) -> PlotInfo:
-
-        x_coords = [plot_data[self.all_attrs.index(self.last_column)]]
-        y_coords = [plot_data[self.all_attrs.index(self.last_row)]]
-        x_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_columns]
-        y_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_rows]
-        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
-        return plotinfo
-
-    def get_assigned_data(self, data) -> List[List[AVP]]:
-        out = []
-        for key_tuple, val_list in data.items():
-            vals = [AVP(a, v) for a, v in zip(self.all_attrs, chain(key_tuple, val_list))]
-            out.append(vals)
-        return out
-
-    def get_prepared_data(self) -> Dict[Tuple[str], Tuple[int]]:
-        dimensions, measures = self.config.dimensions, self.config.measures
-        dimension_names = [d.col_name for d in dimensions]
-        grouped_data = self.datasource.data.groupby(dimension_names)
-        out = {}
-        for measure in measures:
-            aggregated_data = self.get_measure_data(grouped_data, measure)
-            for key_tuple, value in aggregated_data.items():
-                if not key_tuple in out:
-                    out[key_tuple] = [value]
-                else:
-                    out[key_tuple].append(value)
-        return out
-
-    def get_measure_data(self, data, measure) -> Dict[Tuple[str], int]:
-        grouped_measure = data[measure.col_name]
-        aggregated_data = getattr(grouped_measure, measure.aggregation)()  # is a pandas object
-        return aggregated_data.to_dict()
 
 
 class BokehPlotter:
 
     def __init__(self, datasource, config):
-        self.datasource = datasource
-        self.config = config
         self.aggregator = Aggregator(datasource, config)
         self.plots = []
-        self.ncols = None
 
     def create_viz(self):
-        data = self.aggregator.get_data()
-
-        # TODO move to container library
-        self.ncols = self.calculate_ncols(data)
-        self.nrows = len(data) / self.ncols
-
-        x_vals = [avp.val for pi in data for avp in pi.x_coords]
-        self.x_min, self.x_max = min(x_vals), max(x_vals)
-        y_vals = [avp.val for pi in data for avp in pi.y_coords]
-        self.y_min, self.y_max = min(y_vals), max(y_vals)
-
-        print('VALUES', self.x_min, self.x_max, self.y_min, self.y_max)
+        self.aggregator.update_data()
+        data = self.aggregator.data
 
         for plotinfo in data:
             plot = self.make_plot(plotinfo)
@@ -170,8 +49,8 @@ class BokehPlotter:
         x_r, y_r = self.get_range(plot_info, 'x'), self.get_range(plot_info, 'y')
 
         options = {
-            'plot_width': int(1200 / self.ncols),
-            'plot_height': int(800 / self.nrows),
+            'plot_width': int(1200 / self.aggregator.ncols),
+            'plot_height': int(800 / self.aggregator.nrows),
             'toolbar_location': None,
             'x_range': x_r,
             'y_range': y_r,
@@ -194,7 +73,7 @@ class BokehPlotter:
         if isinstance(values[0], str):
             return FactorRange(*values)
         else:
-            _min, _max = getattr(self, f'{axis}_min'), getattr(self, f'{axis}_max')
+            _min, _max = getattr(self.aggregator, f'{axis}_min'), getattr(self.aggregator, f'{axis}_max')
             return Range1d(_min, _max)
 
     def get_axis(self, data: PlotInfo, axis: str):
@@ -209,65 +88,6 @@ class BokehPlotter:
             axis = LinearAxis(ticker=ticker, axis_label=label)
             return axis
 
-    def calculate_ncols(self, data):
-        column_possibilities = []
-        for avp in data[0].x_seps:
-            possibilities = len(self.datasource.get_variations_of(avp.attr))
-            column_possibilities.append(possibilities)
-        ncols = reduce(lambda x, y: x + y, column_possibilities)
-        return ncols
-
     def display(self, *, export_file=None, wait=False):
-        grid = gridplot(self.plots, ncols=self.ncols)
+        grid = gridplot(self.plots, ncols=self.aggregator.ncols)
         show(grid)
-
-    # def add_axes(self, plot, data):
-    #     dimension_amount = len(data[0][0])
-    #     reverse_indicies = list(range(dimension_amount))[::-1]
-    #     for i, orientation in zip(reverse_indicies, ('below', 'above', 'above', 'above')):
-    #         x_ticker =
-    #         plot.add_layout(x_axis, orientation)
-    #
-    #     y_ticker = BasicTicker(num_minor_ticks=0)
-    #     y_axis = LinearAxis(ticker=y_ticker, axis_label='val')
-    #     plot.add_layout(y_axis, 'left')
-
-    #
-    # def get_column_data(self, data) -> Dict[Tuple[str], List[Tuple[Tuple[str], int]]]:
-    #     col_amount = len(self.config.column_dimensions)
-    #
-    #     out = defaultdict(list)
-    #
-    #     for key_tuple, value in data.items():
-    #         col_tuple, row_tuple = key_tuple[:col_amount], key_tuple[col_amount:]
-    #         out[row_tuple].append((col_tuple, value))
-    #     return out
-    #
-    # def make_column_plot(self, row_tuple: Tuple[str], column_data: List[Tuple[Tuple[str], int]]):
-    #
-    #     data = {
-    #         'key': ['/'.join(t[0]) for t in column_data],
-    #         'val': [t[1] for t in column_data]
-    #     }
-    #
-    #     source = ColumnDataSource(data=data)
-    #     # ranges
-    #     x_r, y_r = FactorRange(*data['key']), Range1d(min(data['val']), max(data['val']))
-    #     options = {'plot_width': 1000, 'plot_height': 500, 'toolbar_location': None, 'outline_line_color': '#00FF00'}
-    #     plot = Plot(x_range=x_r, y_range=y_r, **options)
-    #
-    #     extra_data = {}
-    #     for i in range(len(column_data[0][0])):
-    #         amount = (0 if i == 0 else 2) + 1  # FIXME must depend on previous amounts :/
-    #         unique_values = list(set([t[0][i] for t in column_data]))
-    #         labels_to_show = make_unique_string_list(unique_values * amount)
-    #         extra_data['key_label_' + str(i)] = FactorRange(*labels_to_show)
-    #
-    #     plot.extra_x_ranges = extra_data
-    #
-    #     radius = dict(value=5, units='screen')
-    #     glyph = Circle(x='key', y='val', radius=radius)
-    #     renderer = plot.add_glyph(source, glyph)
-    #     self.add_axes(plot, column_data)
-    #     return plot
-    #
