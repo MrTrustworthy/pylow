@@ -8,6 +8,7 @@ import pylow  # noqa
 import pytest
 
 
+
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
 TEST_FILE = TESTDATA_PATH / 'testdata.csv'
 
@@ -45,13 +46,28 @@ def test_config_builder(config, dimensions, measures):
     assert len(pc.measures) == measures
 
 
+def test_output_ordering():
+    pc = pylow.VizConfig.from_dict(CONF_2d0m_1d1m)
+    ds = pylow.Datasource.from_csv(TEST_FILE.absolute())
+    plotter = pylow.BokehPlotter(ds, pc)
+    plotter.aggregator.update_data()
+    data = plotter.aggregator.data
+
+    assert all(x.y_seps[-1].val == 'First Class' for x in data[0:3]), f'{[x.y_seps[-1].val for x in data[0:3]]}'
+    assert all(x.y_seps[-1].val == 'Same Day' for x in data[3:6]), f'{x.y_seps[-1].val for x in data[3:6]}'
+    assert all(x.y_seps[-1].val == 'Second Class' for x in data[6:9]), f'{x.y_seps[-1].val for x in data[6:9]}'
+    assert all(x.y_seps[-1].val == 'Standard Class' for x in data[9:12]), f'{x.y_seps[-1].val for x in data[9:12]}'
+    assert all(x.x_seps[-1].val == 'Furniture' for x in data[0::3]), f'{x.x_seps[-1].val for x in data[0::3]}'
+    assert all(x.x_seps[-1].val == 'Office Supplies' for x in data[1::3]), f'{x.x_seps[-1].val for x in data[1::3]}'
+    assert all(x.x_seps[-1].val == 'Technology' for x in data[2::3]), f'{x.x_seps[-1].val for x in data[2::3]}'
+
 @CONFIG_ROTATE
 def test_example(config, dimensions, measures):
     pc = pylow.VizConfig.from_dict(config)
     ds = pylow.Datasource.from_csv(TEST_FILE.absolute())
     plotter = pylow.BokehPlotter(ds, pc)
     plotter.create_viz()
-    plotter.display(export_file='test/data/temp/test_0_1', wait=True)
+    plotter.display()
     sleep(0.5)  # make sure the browser has time to render the temp file
     assert True
 
