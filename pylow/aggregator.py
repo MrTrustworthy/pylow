@@ -1,13 +1,14 @@
 from functools import reduce
 from itertools import chain
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from numpy import number
 
-from .colorizer import ALL_COLORS
+from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
 from .plotinfo import AVP, PlotInfo
+from .utils import reverse_lerp
 
 
 class Aggregator:
@@ -17,26 +18,27 @@ class Aggregator:
         self.config = config
 
         self.data = None  # type: List[PlotInfo]
-
-        self.all_attrs = list(chain(self.config.dimensions, self.config.measures))
-
-        self.previous_columns = self.config.columns[:-1]
-        self.last_column = self.config.columns[-1]
-
-        self.previous_rows = self.config.rows[:-1]
-        self.last_row = self.config.rows[-1]
-
         self.ncols, self.nrows, self.x_min, self.x_max, self.y_min, self.y_max = (0, 0, 0, 0, 0, 0)
 
-    def update_data(self) -> None:
-        data = self._get_prepared_data()
-        prepared = self._get_assigned_data(data)
-        out = list(set(self._make_plot_info(d) for d in prepared))  # may yield duplicates
-        # sort data so that dimensions and measures stay grouped
-        out.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
-        self.data = out
-        PlotInfo.clear_point_cache()
-        self._update_data_attributes()
+    @property
+    def all_attrs(self):
+        return list(chain(self.config.dimensions, self.config.measures))
+
+    @property
+    def previous_columns(self):
+        return self.config.columns[:-1]
+
+    @property
+    def last_column(self):
+        return self.config.columns[-1]
+
+    @property
+    def previous_rows(self):
+        return self.config.rows[:-1]
+
+    @property
+    def last_row(self):
+        return self.config.rows[-1]
 
     def is_in_first_column(self, plot_info: PlotInfo) -> bool:
         return self.data.index(plot_info) % self.ncols == 0
@@ -50,12 +52,25 @@ class Aggregator:
     def is_in_center_top_column(self, plot_info: PlotInfo) -> bool:
         return self.data.index(plot_info) == (self.ncols - 1) // 2
 
-    def _update_data_attributes(self):
-        self.ncols = self._calculate_ncols()
-        self.nrows = len(self.data) // self.ncols
-        x_vals = [avp.val for pi in self.data for avp in pi.x_coords]
+    def update_data(self) -> None:
+        raw_data = self._get_prepared_data()
+        prepared = self._get_assigned_data(raw_data)
+        final_data = list(set(self._make_plot_info(d) for d in prepared))  # may yield duplicates
+        # sort data so that dimensions and measures stay grouped
+        final_data.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
+        PlotInfo.clear_point_cache()
+
+        self.add_plot_info_colors(final_data)
+        self._update_data_attributes(final_data)
+
+        self.data = final_data
+
+    def _update_data_attributes(self, data: List[PlotInfo]) -> None:
+        self.ncols = self._calculate_ncols(data)
+        self.nrows = len(data) // self.ncols
+        x_vals = [avp.val for pi in data for avp in pi.x_coords]
         self.x_min, self.x_max = min(x_vals), max(x_vals)
-        y_vals = [avp.val for pi in self.data for avp in pi.y_coords]
+        y_vals = [avp.val for pi in data for avp in pi.y_coords]
         self.y_min, self.y_max = min(y_vals), max(y_vals)
 
         # add some buffer so the drawing looks better
@@ -67,9 +82,9 @@ class Aggregator:
             range = int((self.x_max - self.x_min) / 10)
             self.x_min, self.x_max = self.x_min - range, self.x_max + range
 
-    def _calculate_ncols(self):
+    def _calculate_ncols(self, data: List[PlotInfo]) -> int:
         column_possibilities = []
-        for avp in self.data[0].x_seps:
+        for avp in data[0].x_seps:
             possibilities = len(self.datasource.get_variations_of(avp.attr))
             column_possibilities.append(possibilities)
         ncols = reduce(lambda x, y: x + y, column_possibilities)
@@ -81,16 +96,34 @@ class Aggregator:
         y_coords = [plot_data[self.all_attrs.index(self.last_row)]]
         x_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_columns]
         y_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_rows]
-        colors = [self._get_color_data(plot_data)]
-        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps, colors)
+        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
         return plotinfo
 
-    def _get_color_data(self, plot_data: List[AVP]) -> AVP:
-        values = sorted(self.datasource.get_variations_of(self.config.color))
-        current_value = [avp for avp in plot_data if avp.attr == self.config.color][0].val
-        color = ALL_COLORS[values.index(current_value)]
-        color_avp = AVP(self.config.color, color)
-        return color_avp
+    def add_plot_info_colors(self, data: List[PlotInfo]) -> None:
+        # find all possible values that are in any plot of the screen
+        val_variation_lists = (plotinfo.variations_of(self.config.color) for plotinfo in data)
+        val_variations = sorted(set(chain(*val_variation_lists)))
+
+        for plot_info in data:
+            # get the values of the color-attribute of the current plotinfo
+            # TODO FIXME: Find out how to handle cases where the color is not elsewhere on the plot
+            color_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == self.config.color]
+            # create a avp with (Attribute, hex_of_color) for each value
+            color_avps = [self._get_color_data(curr_val, val_variations) for curr_val in color_attribute_vals]
+            plot_info.colors = color_avps
+
+    def _get_color_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
+        if isinstance(self.config.color, Dimension):
+            color = ALL_COLORS[possible_vals.index(current_val)]
+            color_avp = AVP(self.config.color, color)
+            return color_avp
+        else:  # for measures
+            relative_in_range = reverse_lerp(current_val, possible_vals)  # between 0 and 1
+            # turn into value from -0.5 and 0.5 with 0.5 for the smallest values
+            color_saturation = (relative_in_range - 0.5) * -1
+            color = adjust_brightness(DEFAULT_COLOR, color_saturation)
+            color_avp = AVP(self.config.color, color)
+            return color_avp
 
     def _get_assigned_data(self, data) -> List[List[AVP]]:
         out = []
@@ -107,7 +140,7 @@ class Aggregator:
         for measure in measures:
             aggregated_data = self._get_measure_data(grouped_data, measure)
             for key_tuple, value in aggregated_data.items():
-                if not key_tuple in out:
+                if key_tuple not in out:
                     out[key_tuple] = [value]
                 else:
                     out[key_tuple].append(value)
