@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 
 from numpy import number
 
+from .colorizer import ALL_COLORS
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
 from .plotinfo import AVP, PlotInfo
@@ -46,6 +47,9 @@ class Aggregator:
     def is_in_last_row(self, plot_info: PlotInfo) -> bool:
         return self.data.index(plot_info) >= len(self.data) - self.ncols
 
+    def is_in_center_top_column(self, plot_info: PlotInfo) -> bool:
+        return self.data.index(plot_info) == (self.ncols - 1) // 2
+
     def _update_data_attributes(self):
         self.ncols = self._calculate_ncols()
         self.nrows = len(self.data) // self.ncols
@@ -77,8 +81,16 @@ class Aggregator:
         y_coords = [plot_data[self.all_attrs.index(self.last_row)]]
         x_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_columns]
         y_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_rows]
-        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
+        colors = [self._get_color_data(plot_data)]
+        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps, colors)
         return plotinfo
+
+    def _get_color_data(self, plot_data: List[AVP]) -> AVP:
+        values = sorted(self.datasource.get_variations_of(self.config.color))
+        current_value = [avp for avp in plot_data if avp.attr == self.config.color][0].val
+        color = ALL_COLORS[values.index(current_value)]
+        color_avp = AVP(self.config.color, color)
+        return color_avp
 
     def _get_assigned_data(self, data) -> List[List[AVP]]:
         out = []

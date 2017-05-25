@@ -13,6 +13,9 @@ class Attribute:
     def __repr__(self):
         return f'<plot_config.{type(self).__name__}: {self.col_name}>'
 
+    def __eq__(self, other):
+        return type(self).__name__ == type(other).__name__ and self.col_name == other.col_name
+
 
 class Dimension(Attribute):
 
@@ -45,7 +48,7 @@ class VizConfig:
         # all non-writeable properties to ensure lists don't get switched out
         self._columns = []
         self._rows = []
-        self.colors = []
+        self.color = None
         self.tooltips = []
 
     @property
@@ -96,7 +99,8 @@ class VizConfig:
 
     @classmethod
     def from_dict(cls, _dict: dict) -> 'VizConfig':
-        pc = cls()
-        pc.columns.extend(_dict['columns'])
-        pc.rows.extend(_dict['rows'])
-        return pc
+        vc = cls()
+        vc.columns.extend(_dict['columns'])
+        vc.rows.extend(_dict['rows'])
+        vc.color = _dict.get('color', None)
+        return vc

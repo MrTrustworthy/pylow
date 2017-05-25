@@ -14,12 +14,14 @@ class PlotInfo:
         x_coords: List[AVP] = None,
         y_coords: List[AVP] = None,
         x_seps: List[AVP] = None,
-        y_seps: List[AVP] = None
+        y_seps: List[AVP] = None,
+        colors: List[AVP] = None
     ):
         self.x_coords = x_coords
         self.y_coords = y_coords
         self.x_seps = x_seps
         self.y_seps = y_seps
+        self.colors = colors
 
     @classmethod
     def create_new_or_update(
@@ -27,9 +29,10 @@ class PlotInfo:
         x_coords: List[AVP] = None,
         y_coords: List[AVP] = None,
         x_seps: List[AVP] = None,
-        y_seps: List[AVP] = None
+        y_seps: List[AVP] = None,
+        colors: List[AVP] = None
     ):
-        new = cls(x_coords, y_coords, x_seps, y_seps)
+        new = cls(x_coords, y_coords, x_seps, y_seps, colors)
         existing_objects = list(filter(lambda ppi: ppi.same_group(new), cls._point_list))
         if len(existing_objects) == 0:
             cls._point_list.append(new)
@@ -38,6 +41,7 @@ class PlotInfo:
             existing = existing_objects[0]
             existing.x_coords.extend(x_coords)
             existing.y_coords.extend(y_coords)
+            existing.colors.extend(colors)
             return existing
         assert False
 
