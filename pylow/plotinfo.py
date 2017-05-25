@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple
 from itertools import chain
 
 from .plot_config import Attribute
+from .colorizer import DEFAULT_COLOR
 
 # attribute_value pair
 AVP = namedtuple('AVP', ['attr', 'val'])
@@ -24,7 +25,15 @@ class PlotInfo:
         self.y_coords = y_coords
         self.x_seps = x_seps
         self.y_seps = y_seps
-        self.colors = colors
+        self._colors = colors
+
+    @property
+    def colors(self):
+        return self._colors if self._colors is not None else [AVP(None, DEFAULT_COLOR)] * len(self.x_coords)
+
+    @colors.setter
+    def colors(self, val):
+        self._colors = val
 
     @classmethod
     def create_new_or_update(

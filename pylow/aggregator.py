@@ -60,7 +60,7 @@ class Aggregator:
         final_data.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
         PlotInfo.clear_point_cache()
 
-        self.add_plot_info_colors(final_data)
+        self._add_plot_info_colors(final_data)
         self._update_data_attributes(final_data)
 
         self.data = final_data
@@ -99,7 +99,16 @@ class Aggregator:
         plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
         return plotinfo
 
-    def add_plot_info_colors(self, data: List[PlotInfo]) -> None:
+    def _add_plot_info_colors(self, data: List[PlotInfo]) -> None:
+
+        if self.config.color is None:
+            for plot_info in data:
+                plot_info.color = None
+            return
+        else:
+            self._add_plot_info_colors_from_conf(data)
+
+    def _add_plot_info_colors_from_conf(self, data: List[PlotInfo]) -> None:
         # find all possible values that are in any plot of the screen
         val_variation_lists = (plotinfo.variations_of(self.config.color) for plotinfo in data)
         val_variations = sorted(set(chain(*val_variation_lists)))
