@@ -7,7 +7,7 @@ from numpy import number
 from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
-from .plotinfo import AVP, PlotInfo
+from .plotinfo import AVP, PlotInfo, BASE_SIZE
 from .utils import reverse_lerp
 
 
@@ -61,34 +61,11 @@ class Aggregator:
         PlotInfo.clear_point_cache()
 
         self._add_plot_info_colors(final_data)
+        self._add_plot_info_sizes(final_data)
+
         self._update_data_attributes(final_data)
 
         self.data = final_data
-
-    def _update_data_attributes(self, data: List[PlotInfo]) -> None:
-        self.ncols = self._calculate_ncols(data)
-        self.nrows = len(data) // self.ncols
-        x_vals = [avp.val for pi in data for avp in pi.x_coords]
-        self.x_min, self.x_max = min(x_vals), max(x_vals)
-        y_vals = [avp.val for pi in data for avp in pi.y_coords]
-        self.y_min, self.y_max = min(y_vals), max(y_vals)
-
-        # add some buffer so the drawing looks better
-        if isinstance(self.y_min, number):
-            range = int((self.y_max - self.y_min) / 10)
-            self.y_min, self.y_max = self.y_min - range, self.y_max + range
-
-        if isinstance(self.x_min, number):
-            range = int((self.x_max - self.x_min) / 10)
-            self.x_min, self.x_max = self.x_min - range, self.x_max + range
-
-    def _calculate_ncols(self, data: List[PlotInfo]) -> int:
-        column_possibilities = []
-        for avp in data[0].x_seps:
-            possibilities = len(self.datasource.get_variations_of(avp.attr))
-            column_possibilities.append(possibilities)
-        ncols = reduce(lambda x, y: x + y, column_possibilities)
-        return ncols
 
     def _make_plot_info(self, plot_data: List[AVP]) -> PlotInfo:
 
@@ -99,6 +76,43 @@ class Aggregator:
         plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
         return plotinfo
 
+    # sizes TODO make generic and integrate into color workflow
+    def _add_plot_info_sizes(self, data: List[PlotInfo]) -> None:
+        if self.config.size is None:
+            for plot_info in data:
+                plot_info.sizes = None
+            return
+        else:
+            self._add_plot_info_sizes_from_conf(data)
+
+    def _add_plot_info_sizes_from_conf(self, data: List[PlotInfo]) -> None:
+        # find all possible values that are in any plot of the screen
+        val_variation_lists = (plotinfo.variations_of(self.config.size) for plotinfo in data)
+        val_variations = sorted(set(chain(*val_variation_lists)))
+
+        for plot_info in data:
+            # get the values of the size-attribute of the current plotinfo
+            # TODO FIXME: Find out how to handle cases where the size is not elsewhere on the plot
+            size_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == self.config.size]
+            # create a avp with (Attribute, float_of_size) for each value
+            size_avps = [self._get_size_data(curr_val, val_variations) for curr_val in size_attribute_vals]
+            plot_info.sizes = size_avps
+
+    def _get_size_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
+        if isinstance(self.config.size, Dimension):
+            # TODO currently, size only affects plot in one direction -> bigger
+            size = possible_vals.index(current_val)
+            size_avp = AVP(self.config.size, (size + 1) * BASE_SIZE)
+            return size_avp
+        else:  # for measures
+            relative_in_range = reverse_lerp(current_val, possible_vals)  # between 0 and 1
+            # turn into value from 0.5 to 3
+            size_factor = (relative_in_range + 0.5) * 2
+            size_avp = AVP(self.config.size, size_factor * BASE_SIZE)
+            return size_avp
+
+
+    # colors
     def _add_plot_info_colors(self, data: List[PlotInfo]) -> None:
 
         if self.config.color is None:
@@ -134,6 +148,33 @@ class Aggregator:
             color_avp = AVP(self.config.color, color)
             return color_avp
 
+    # get meta-info
+    def _update_data_attributes(self, data: List[PlotInfo]) -> None:
+        self.ncols = self._calculate_ncols(data)
+        self.nrows = len(data) // self.ncols
+        x_vals = [avp.val for pi in data for avp in pi.x_coords]
+        self.x_min, self.x_max = min(x_vals), max(x_vals)
+        y_vals = [avp.val for pi in data for avp in pi.y_coords]
+        self.y_min, self.y_max = min(y_vals), max(y_vals)
+
+        # add some buffer so the drawing looks better
+        if isinstance(self.y_min, number):
+            range = int((self.y_max - self.y_min) / 10)
+            self.y_min, self.y_max = self.y_min - range, self.y_max + range
+
+        if isinstance(self.x_min, number):
+            range = int((self.x_max - self.x_min) / 10)
+            self.x_min, self.x_max = self.x_min - range, self.x_max + range
+
+    def _calculate_ncols(self, data: List[PlotInfo]) -> int:
+        column_possibilities = []
+        for avp in data[0].x_seps:
+            possibilities = len(self.datasource.get_variations_of(avp.attr))
+            column_possibilities.append(possibilities)
+        ncols = reduce(lambda x, y: x + y, column_possibilities)
+        return ncols
+
+    # prepare data
     def _get_assigned_data(self, data) -> List[List[AVP]]:
         out = []
         for key_tuple, val_list in data.items():

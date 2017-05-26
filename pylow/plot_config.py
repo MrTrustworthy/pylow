@@ -49,6 +49,7 @@ class VizConfig:
         self._columns = []
         self._rows = []
         self.color = None
+        self.size = None
         self.tooltips = []
 
     @property
@@ -103,4 +104,5 @@ class VizConfig:
         vc.columns.extend(_dict['columns'])
         vc.rows.extend(_dict['rows'])
         vc.color = _dict.get('color', None)
+        vc.size = _dict.get('size', None)
         return vc

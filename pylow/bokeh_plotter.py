@@ -43,11 +43,13 @@ class BokehPlotter:
         x_colname = plot_info.x_coords[0].attr.col_name
         y_colname = plot_info.y_coords[0].attr.col_name
         color_colname = '_color'
+        size_colname = '_size'
         # DATA
         data = {
             x_colname: [avp.val for avp in plot_info.x_coords],
             y_colname: [avp.val for avp in plot_info.y_coords],
-            color_colname: [avp.val for avp in plot_info.colors]
+            color_colname: [avp.val for avp in plot_info.colors],
+            size_colname: [avp.val for avp in plot_info.sizes]
         }
         source = ColumnDataSource(data=data)
 
@@ -90,7 +92,7 @@ class BokehPlotter:
         self.make_axes_and_grids(plot, plot_info)
 
         # GLYPH
-        glyph = self.create_glyph(x_colname, y_colname, color_colname)
+        glyph = self.create_glyph(x_colname, y_colname, color_colname, size_colname)
         renderer = plot.add_glyph(source, glyph)
 
         # HOVER
@@ -117,14 +119,14 @@ class BokehPlotter:
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
-    def create_glyph(self, x_colname: str, y_colname: str, color_colname) -> Glyph:
+    def create_glyph(self, x_colname: str, y_colname: str, color_colname: str, size_colname: str) -> Glyph:
         if not 'some_condition':  # TODO FIXME get options from Attribute (or PlotConfig)
             return Line(x=x_colname, y=y_colname, line_color=color_colname, line_width=2)
         elif not 'some_condition':  # TODO FIXME
             return VBar(x=x_colname, top=y_colname)
         else:
             radius = dict(value=5, units='screen')
-            return Circle(x=x_colname, y=y_colname, fill_color=color_colname, line_color=color_colname, radius=radius)
+            return Circle(x=x_colname, y=y_colname, fill_color=color_colname, line_color=color_colname, size=size_colname)
 
     def get_range(self, data: PlotInfo, axis: str) -> Range:
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]

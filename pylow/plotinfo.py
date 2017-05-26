@@ -5,6 +5,8 @@ from itertools import chain
 from .plot_config import Attribute
 from .colorizer import DEFAULT_COLOR
 
+BASE_SIZE = 10
+
 # attribute_value pair
 AVP = namedtuple('AVP', ['attr', 'val'])
 
@@ -19,13 +21,14 @@ class PlotInfo:
         y_coords: List[AVP] = None,
         x_seps: List[AVP] = None,
         y_seps: List[AVP] = None,
-        colors: List[AVP] = None
     ):
+        assert len(x_coords) == len(y_coords)
         self.x_coords = x_coords
         self.y_coords = y_coords
         self.x_seps = x_seps
         self.y_seps = y_seps
-        self._colors = colors
+        self._colors = None  # will be drawn from property
+        self._sizes = None  # will be drawn from property
 
     @property
     def colors(self):
@@ -33,7 +36,17 @@ class PlotInfo:
 
     @colors.setter
     def colors(self, val):
+        assert val is None or len(val) == len(self.x_coords)
         self._colors = val
+
+    @property
+    def sizes(self):
+        return self._sizes if self._sizes is not None else [AVP(None, BASE_SIZE)] * len(self.x_coords)
+
+    @sizes.setter
+    def sizes(self, val):
+        assert val is None or len(val) == len(self.x_coords)
+        self._sizes = val
 
     @classmethod
     def create_new_or_update(
@@ -42,7 +55,6 @@ class PlotInfo:
         y_coords: List[AVP] = None,
         x_seps: List[AVP] = None,
         y_seps: List[AVP] = None
-        # colors: List[AVP] = None
     ):
         new = cls(x_coords, y_coords, x_seps, y_seps)
         existing_objects = list(filter(lambda ppi: ppi.would_be_in_same_plot(new), cls._point_list))
@@ -53,7 +65,6 @@ class PlotInfo:
             existing = existing_objects[0]
             existing.x_coords.extend(x_coords)
             existing.y_coords.extend(y_coords)
-            # existing.colors.extend(colors)
             return existing
         assert False
 
