@@ -60,9 +60,7 @@ class Aggregator:
         final_data.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
         PlotInfo.clear_point_cache()
 
-        self._add_plot_info_colors(final_data)
-        self._add_plot_info_sizes(final_data)
-
+        self._add_plot_info_sizes_and_colors(final_data)
         self._update_data_attributes(final_data)
 
         self.data = final_data
@@ -76,31 +74,30 @@ class Aggregator:
         plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
         return plotinfo
 
-    # sizes TODO make generic and integrate into color workflow
-    def _add_plot_info_sizes(self, data: List[PlotInfo]) -> None:
-        if self.config.size is None:
-            for plot_info in data:
-                plot_info.sizes = None
-            return
-        else:
-            self._add_plot_info_sizes_from_conf(data)
+    # sizes and colors
+    def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo]) -> None:
+        for attr in ('size', 'color'):
+            if getattr(self.config, attr) is not None:
+                self._add_plot_info_sizes_and_colors_from_conf(data, attr)
 
-    def _add_plot_info_sizes_from_conf(self, data: List[PlotInfo]) -> None:
+    def _add_plot_info_sizes_and_colors_from_conf(self, data: List[PlotInfo], attr: str) -> None:
         # find all possible values that are in any plot of the screen
-        val_variation_lists = (plotinfo.variations_of(self.config.size) for plotinfo in data)
+        config_attribute = getattr(self.config, attr)
+        val_variation_lists = (plotinfo.variations_of(config_attribute) for plotinfo in data)
         val_variations = sorted(set(chain(*val_variation_lists)))
 
         for plot_info in data:
-            # get the values of the size-attribute of the current plotinfo
-            # TODO FIXME: Find out how to handle cases where the size is not elsewhere on the plot
-            size_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == self.config.size]
-            # create a avp with (Attribute, float_of_size) for each value
-            size_avps = [self._get_size_data(curr_val, val_variations) for curr_val in size_attribute_vals]
-            plot_info.sizes = size_avps
+            # get the values of the size- or color-attribute of the current plotinfo
+            # TODO FIXME: Find out how to handle cases where the attribute is not elsewhere on the plot
+            size_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == config_attribute]
+            # create a avp with (Attribute, float_of_size or hex_of_color) for each value
+            getter_func = getattr(self, f'_get_{attr}_data')
+            size_avps = [getter_func(curr_val, val_variations) for curr_val in size_attribute_vals]
+            setattr(plot_info, f'{attr}s', size_avps)
 
     def _get_size_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
         if isinstance(self.config.size, Dimension):
-            # TODO currently, size only affects plot in one direction -> bigger
+            # TODO FIXME currently, size only affects plot in one direction -> bigger, need to clamp this
             size = possible_vals.index(current_val)
             size_avp = AVP(self.config.size, (size + 1) * BASE_SIZE)
             return size_avp
@@ -110,30 +107,6 @@ class Aggregator:
             size_factor = (relative_in_range + 0.5) * 2
             size_avp = AVP(self.config.size, size_factor * BASE_SIZE)
             return size_avp
-
-
-    # colors
-    def _add_plot_info_colors(self, data: List[PlotInfo]) -> None:
-
-        if self.config.color is None:
-            for plot_info in data:
-                plot_info.color = None
-            return
-        else:
-            self._add_plot_info_colors_from_conf(data)
-
-    def _add_plot_info_colors_from_conf(self, data: List[PlotInfo]) -> None:
-        # find all possible values that are in any plot of the screen
-        val_variation_lists = (plotinfo.variations_of(self.config.color) for plotinfo in data)
-        val_variations = sorted(set(chain(*val_variation_lists)))
-
-        for plot_info in data:
-            # get the values of the color-attribute of the current plotinfo
-            # TODO FIXME: Find out how to handle cases where the color is not elsewhere on the plot
-            color_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == self.config.color]
-            # create a avp with (Attribute, hex_of_color) for each value
-            color_avps = [self._get_color_data(curr_val, val_variations) for curr_val in color_attribute_vals]
-            plot_info.colors = color_avps
 
     def _get_color_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
         if isinstance(self.config.color, Dimension):

@@ -65,9 +65,9 @@ CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     # (CONF_0d1m_1d0m, 1, 1),
     # (CONF_2d0m_0d1m, 2, 1),
     #
-    # (CONF_2d0m_1d1m_colD, 3, 1),
-    # (CONF_2d0m_1d1m_colM, 3, 1),
-    # (CONF_2d0m_1d1m_colN, 3, 1),
+    (CONF_2d0m_1d1m_colD, 3, 1),
+    (CONF_2d0m_1d1m_colM, 3, 1),
+    (CONF_2d0m_1d1m_colN, 3, 1),
 
     (CONF_2d0m_1d1m_sizeD, 3, 1),
     (CONF_2d0m_1d1m_sizeM, 3, 1),
