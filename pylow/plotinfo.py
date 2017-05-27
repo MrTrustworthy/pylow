@@ -5,7 +5,6 @@ from itertools import chain
 from .plot_config import Attribute
 from .colorizer import DEFAULT_COLOR
 
-BASE_SIZE = 10
 
 # attribute_value pair
 AVP = namedtuple('AVP', ['attr', 'val'])
@@ -41,7 +40,7 @@ class PlotInfo:
 
     @property
     def sizes(self):
-        return self._sizes if self._sizes is not None else [AVP(None, BASE_SIZE)] * len(self.x_coords)
+        return self._sizes if self._sizes is not None else [AVP(None, 1)] * len(self.x_coords)
 
     @sizes.setter
     def sizes(self, val):

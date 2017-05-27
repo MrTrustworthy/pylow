@@ -12,21 +12,22 @@ from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
                           HoverTool, Line, LinearAxis, Plot, Range1d,
                           SingleIntervalTicker)
 from bokeh.models.annotations import Label, Title
+from bokeh.models.axes import Axis
 from bokeh.models.glyphs import Circle, Glyph, Line, Text, VBar
-from bokeh.sampledata.sprint import sprint
 from bokeh.models.ranges import Range
 from bokeh.models.tickers import Ticker
-from bokeh.models.axes import Axis
+from bokeh.sampledata.sprint import sprint
+
 from .aggregator import Aggregator
 from .datasource import Datasource
-from .plot_config import Attribute, Dimension, Measure, VizConfig
+from .plot_config import Attribute, Dimension, MarkType, Measure, VizConfig
 from .plotinfo import AVP, PlotInfo
 from .utils import make_unique_string_list
 
 
 class BokehPlotter:
 
-    def __init__(self, datasource: Datasource, config:PlotInfo):
+    def __init__(self, datasource: Datasource, config: VizConfig):
         self.aggregator = Aggregator(datasource, config)
         self.plots = []
 
@@ -49,7 +50,7 @@ class BokehPlotter:
             x_colname: [avp.val for avp in plot_info.x_coords],
             y_colname: [avp.val for avp in plot_info.y_coords],
             color_colname: [avp.val for avp in plot_info.colors],
-            size_colname: [avp.val for avp in plot_info.sizes]
+            size_colname: [self.aggregator.config.get_glyph_size(avp.val) for avp in plot_info.sizes]
         }
         source = ColumnDataSource(data=data)
 
@@ -120,13 +121,15 @@ class BokehPlotter:
             plot.add_layout(grid)
 
     def create_glyph(self, x_colname: str, y_colname: str, color_colname: str, size_colname: str) -> Glyph:
-        if not 'some_condition':  # TODO FIXME get options from Attribute (or PlotConfig)
-            return Line(x=x_colname, y=y_colname, line_color=color_colname, line_width=2)
-        elif not 'some_condition':  # TODO FIXME
-            return VBar(x=x_colname, top=y_colname)
-        else:
-            radius = dict(value=5, units='screen')
+        mark_type = self.aggregator.config.mark_type
+        if mark_type == MarkType.LINE:
+            return Line(x=x_colname, y=y_colname)
+        elif mark_type == MarkType.BAR:
+            return VBar(x=x_colname, top=y_colname, fill_color=color_colname, line_color=color_colname, width=size_colname)
+        elif mark_type == MarkType.CIRCLE:
             return Circle(x=x_colname, y=y_colname, fill_color=color_colname, line_color=color_colname, size=size_colname)
+        else:
+            assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
     def get_range(self, data: PlotInfo, axis: str) -> Range:
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]

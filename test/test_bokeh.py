@@ -59,19 +59,28 @@ CONF_2d0m_1d1m_sizeM = {
     'size': pylow.Measure('Quantity')
 }
 
+CONF_2d0m_1d1m_sizeM_colD = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
+    'size': pylow.Measure('Quantity'),
+    'color': pylow.Dimension('Region'),
+    'mark_type': pylow.plot_config.MarkType.LINE
+}
 
 CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     # (CONF_1d0m_0d1m, 1, 1),
     # (CONF_0d1m_1d0m, 1, 1),
     # (CONF_2d0m_0d1m, 2, 1),
     #
-    (CONF_2d0m_1d1m_colD, 3, 1),
-    (CONF_2d0m_1d1m_colM, 3, 1),
-    (CONF_2d0m_1d1m_colN, 3, 1),
+    # (CONF_2d0m_1d1m_colD, 3, 1),
+    # (CONF_2d0m_1d1m_colM, 3, 1),
+    # (CONF_2d0m_1d1m_colN, 3, 1),
+    #
+    # (CONF_2d0m_1d1m_sizeD, 3, 1),
+    # (CONF_2d0m_1d1m_sizeM, 3, 1),
+    # (CONF_2d0m_1d1m_sizeN, 3, 1),
 
-    (CONF_2d0m_1d1m_sizeD, 3, 1),
-    (CONF_2d0m_1d1m_sizeM, 3, 1),
-    (CONF_2d0m_1d1m_sizeN, 3, 1),
+    (CONF_2d0m_1d1m_sizeM_colD, 3, 1)
 ])
 
 

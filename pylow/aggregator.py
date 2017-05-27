@@ -7,7 +7,7 @@ from numpy import number
 from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
-from .plotinfo import AVP, PlotInfo, BASE_SIZE
+from .plotinfo import AVP, PlotInfo
 from .utils import reverse_lerp
 
 
@@ -99,13 +99,13 @@ class Aggregator:
         if isinstance(self.config.size, Dimension):
             # TODO FIXME currently, size only affects plot in one direction -> bigger, need to clamp this
             size = possible_vals.index(current_val)
-            size_avp = AVP(self.config.size, (size + 1) * BASE_SIZE)
+            size_avp = AVP(self.config.size, (size + 1))
             return size_avp
         else:  # for measures
             relative_in_range = reverse_lerp(current_val, possible_vals)  # between 0 and 1
-            # turn into value from 0.5 to 3
-            size_factor = (relative_in_range + 0.5) * 2
-            size_avp = AVP(self.config.size, size_factor * BASE_SIZE)
+            # turn into value from 0.5 to 2
+            size_factor = (relative_in_range + 0.5) * (4/3)
+            size_avp = AVP(self.config.size, size_factor)
             return size_avp
 
     def _get_color_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
