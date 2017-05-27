@@ -34,14 +34,19 @@ class BokehPlotter:
         self.plots = []
 
     def create_viz(self) -> None:
+        """ The single external interface for consumers; will create all plots of this instance"""
         self.aggregator.update_data()
         data = self.aggregator.data
 
         for plotinfo in data:
-            plot = self.make_plot(plotinfo)
+            plot = self._make_plot(plotinfo)
             self.plots.append(plot)
 
-    def make_plot(self, plot_info: PlotInfo) -> None:
+    def _make_plot(self, plot_info: PlotInfo) -> None:
+        """ Main function that orchestrates the creation of a bokeh.Plot object.
+
+        Will delegate the parts of plot creation to other methods
+        """
 
         x_colname, y_colname, source = self._prepare_viz_data(plot_info)
 
@@ -66,6 +71,8 @@ class BokehPlotter:
         return plot
 
     def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, ColumnDataSource]:
+        """ Create a representation of the data for plotting that is suitable for consumption by bokeh"""
+
         x_colname = plot_info.x_coords[0].attr.col_name
         y_colname = plot_info.y_coords[0].attr.col_name
         # DATA
@@ -79,6 +86,8 @@ class BokehPlotter:
         return x_colname, y_colname, source
 
     def _get_plot_options(self, plot_info: PlotInfo, x_range: Range, y_range: Range) -> Dict[str, Any]:
+        """ Create the configuration object to instantiate a bokeh.Plot object"""
+
         options = {
             'plot_width': int(1200 / self.aggregator.ncols),
             'plot_height': int(800 / self.aggregator.nrows),
@@ -97,6 +106,8 @@ class BokehPlotter:
         return options
 
     def _add_labels(self, plot: Plot, plot_info: PlotInfo, options: Dict[str, Any]) -> None:
+        """ Adds the labels to the left and top of a plot depending on its position in the grid"""
+
         # Labels on the left
         if self.aggregator.is_in_first_column(plot_info):
             text = plot_info.y_seps[-1].val.replace(' ', '\n')  # FIXME inserting \n does nothing
@@ -112,6 +123,8 @@ class BokehPlotter:
             plot.add_layout(label)
 
     def _add_axes_and_grids(self, plot: Plot, plot_info: PlotInfo) -> None:
+        """ Adds the axes and grids to the plot, depending on its position in the grid"""
+
         x_tick, x_ax = self._get_axis(plot_info, 'x')
         if self.aggregator.is_in_last_row(plot_info):
             plot.add_layout(x_ax, 'below')
@@ -120,6 +133,8 @@ class BokehPlotter:
         if self.aggregator.is_in_first_column(plot_info):
             plot.add_layout(y_ax, 'left')
 
+        # Don't create grid lines for dimensions
+        # TODO FIXME figure out how to do this the best way, is currently only based on IS_STRING
         value = [avp.val for avp in plot_info.x_coords][0]
         if not isinstance(value, str):
             grid = Grid(dimension=0, ticker=x_tick, grid_line_dash='dotted')
@@ -131,6 +146,8 @@ class BokehPlotter:
             plot.add_layout(grid)
 
     def _create_glyph(self, x_colname: str, y_colname: str) -> Glyph:
+        """ Creates a glyph based on the configuration"""
+
         mark_type = self.aggregator.config.mark_type
         if mark_type == MarkType.LINE:
             # TODO FIXME Use multiline to handle colors and sizes
@@ -143,6 +160,8 @@ class BokehPlotter:
             assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
     def _get_range(self, data: PlotInfo, axis: str) -> Range:
+        """ Creates a bokeh.Range object for the given axis & data"""
+
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         if isinstance(values[0], str):
             return FactorRange(*values)
@@ -151,6 +170,7 @@ class BokehPlotter:
             return Range1d(_min, _max)
 
     def _get_axis(self, data: PlotInfo, axis: str) -> Tuple[Ticker, Axis]:
+        """ Creates and returns the axies object for a given axis direction & data"""
 
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         options = {
@@ -171,6 +191,9 @@ class BokehPlotter:
         return ticker, axis
 
     def _get_tooltip(self, renderer, plot_info: PlotInfo) -> HoverTool:
+        """ Creates and returns the tooltip-template for this plot"""
+
+        # TODO FIXME: Figure out how to approach this, currently basically only a tech demo
         # TODO FIXME: check if there is a 'level' property
         x_colname = plot_info.x_coords[0].attr.col_name
         y_colname = plot_info.y_coords[0].attr.col_name
@@ -189,5 +212,7 @@ class BokehPlotter:
         return HoverTool(tooltips=tooltip, anchor='top_center', renderers=[renderer])
 
     def display(self) -> None:
+        """ Displays all generated plots in a grid"""
+
         grid = gridplot(self.plots, ncols=self.aggregator.ncols)
         show(grid)
