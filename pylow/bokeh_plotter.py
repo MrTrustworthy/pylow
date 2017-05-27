@@ -3,7 +3,7 @@ import pathlib
 from collections import defaultdict, namedtuple
 from functools import reduce
 from itertools import chain
-from typing import Dict, Generator, List, Tuple, Union
+from typing import Dict, Generator, List, Tuple, Union, Any
 
 from bokeh.io import output_notebook, show
 from bokeh.layouts import gridplot
@@ -24,6 +24,8 @@ from .plot_config import Attribute, Dimension, MarkType, Measure, VizConfig
 from .plotinfo import AVP, PlotInfo
 from .utils import make_unique_string_list
 
+SIZE_COLNAME = '_size'
+COLOR_COLNAME = '_color'
 
 class BokehPlotter:
 
@@ -41,29 +43,48 @@ class BokehPlotter:
 
     def make_plot(self, plot_info: PlotInfo) -> None:
 
+        x_colname, y_colname, source = self._prepare_viz_data(plot_info)
+
+        # RANGES
+        x_range, y_range = self._get_range(plot_info, 'x'), self._get_range(plot_info, 'y')
+
+        options = self._get_plot_options(plot_info, x_range, y_range)
+        plot = Plot(**options)
+
+        self._add_labels(plot, plot_info, options)
+
+        # AXES
+        self._add_axes_and_grids(plot, plot_info)
+
+        # GLYPH
+        glyph = self._create_glyph(x_colname, y_colname)
+        renderer = plot.add_glyph(source, glyph)
+
+        # HOVER
+        hover = self._get_tooltip(renderer, plot_info)
+        plot.add_tools(hover)
+        return plot
+
+    def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, ColumnDataSource]:
         x_colname = plot_info.x_coords[0].attr.col_name
         y_colname = plot_info.y_coords[0].attr.col_name
-        color_colname = '_color'
-        size_colname = '_size'
         # DATA
         data = {
             x_colname: [avp.val for avp in plot_info.x_coords],
             y_colname: [avp.val for avp in plot_info.y_coords],
-            color_colname: [avp.val for avp in plot_info.colors],
-            size_colname: [self.aggregator.config.get_glyph_size(avp.val) for avp in plot_info.sizes]
+            COLOR_COLNAME: [avp.val for avp in plot_info.colors],
+            SIZE_COLNAME: [self.aggregator.config.get_glyph_size(avp.val) for avp in plot_info.sizes]
         }
         source = ColumnDataSource(data=data)
+        return x_colname, y_colname, source
 
-        # RANGES
-        x_r, y_r = self.get_range(plot_info, 'x'), self.get_range(plot_info, 'y')
-
-        # PLOT
+    def _get_plot_options(self, plot_info: PlotInfo, x_range: Range, y_range: Range) -> Dict[str, Any]:
         options = {
             'plot_width': int(1200 / self.aggregator.ncols),
             'plot_height': int(800 / self.aggregator.nrows),
             'toolbar_location': None,
-            'x_range': x_r,
-            'y_range': y_r,
+            'x_range': x_range,
+            'y_range': y_range,
             'min_border': 0,
             'min_border_left': 0 if self.aggregator.is_in_first_column(plot_info) else 0
         }
@@ -73,8 +94,9 @@ class BokehPlotter:
             text = '/'.join(sep.attr.col_name for sep in chain(plot_info.x_seps, [plot_info.x_coords[0]]))
             options['title'] = Title(text=text, align='center')
 
-        plot = Plot(**options)
+        return options
 
+    def _add_labels(self, plot: Plot, plot_info: PlotInfo, options: Dict[str, Any]) -> None:
         # Labels on the left
         if self.aggregator.is_in_first_column(plot_info):
             text = plot_info.y_seps[-1].val.replace(' ', '\n')  # FIXME inserting \n does nothing
@@ -89,24 +111,12 @@ class BokehPlotter:
                           y_units='screen', text=text, render_mode='css', text_align='center')
             plot.add_layout(label)
 
-        # AXES
-        self.make_axes_and_grids(plot, plot_info)
-
-        # GLYPH
-        glyph = self.create_glyph(x_colname, y_colname, color_colname, size_colname)
-        renderer = plot.add_glyph(source, glyph)
-
-        # HOVER
-        hover = self.get_tooltip(renderer, plot_info)
-        plot.add_tools(hover)
-        return plot
-
-    def make_axes_and_grids(self, plot: Plot, plot_info: PlotInfo) -> None:
-        x_tick, x_ax = self.get_axis(plot_info, 'x')
+    def _add_axes_and_grids(self, plot: Plot, plot_info: PlotInfo) -> None:
+        x_tick, x_ax = self._get_axis(plot_info, 'x')
         if self.aggregator.is_in_last_row(plot_info):
             plot.add_layout(x_ax, 'below')
 
-        y_tick, y_ax = self.get_axis(plot_info, 'y')
+        y_tick, y_ax = self._get_axis(plot_info, 'y')
         if self.aggregator.is_in_first_column(plot_info):
             plot.add_layout(y_ax, 'left')
 
@@ -120,18 +130,19 @@ class BokehPlotter:
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
-    def create_glyph(self, x_colname: str, y_colname: str, color_colname: str, size_colname: str) -> Glyph:
+    def _create_glyph(self, x_colname: str, y_colname: str) -> Glyph:
         mark_type = self.aggregator.config.mark_type
         if mark_type == MarkType.LINE:
+            # TODO FIXME Use multiline to handle colors and sizes
             return Line(x=x_colname, y=y_colname)
         elif mark_type == MarkType.BAR:
-            return VBar(x=x_colname, top=y_colname, fill_color=color_colname, line_color=color_colname, width=size_colname)
+            return VBar(x=x_colname, top=y_colname, fill_color=COLOR_COLNAME, line_color=COLOR_COLNAME, width=SIZE_COLNAME)
         elif mark_type == MarkType.CIRCLE:
-            return Circle(x=x_colname, y=y_colname, fill_color=color_colname, line_color=color_colname, size=size_colname)
+            return Circle(x=x_colname, y=y_colname, fill_color=COLOR_COLNAME, line_color=COLOR_COLNAME, size=SIZE_COLNAME)
         else:
             assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
-    def get_range(self, data: PlotInfo, axis: str) -> Range:
+    def _get_range(self, data: PlotInfo, axis: str) -> Range:
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         if isinstance(values[0], str):
             return FactorRange(*values)
@@ -139,7 +150,7 @@ class BokehPlotter:
             _min, _max = getattr(self.aggregator, f'{axis}_min'), getattr(self.aggregator, f'{axis}_max')
             return Range1d(_min, _max)
 
-    def get_axis(self, data: PlotInfo, axis: str) -> Tuple[Ticker, Axis]:
+    def _get_axis(self, data: PlotInfo, axis: str) -> Tuple[Ticker, Axis]:
 
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         options = {
@@ -159,7 +170,7 @@ class BokehPlotter:
 
         return ticker, axis
 
-    def get_tooltip(self, renderer, plot_info: PlotInfo) -> HoverTool:
+    def _get_tooltip(self, renderer, plot_info: PlotInfo) -> HoverTool:
         # TODO FIXME: check if there is a 'level' property
         x_colname = plot_info.x_coords[0].attr.col_name
         y_colname = plot_info.y_coords[0].attr.col_name
