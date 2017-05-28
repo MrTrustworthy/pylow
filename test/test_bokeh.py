@@ -64,7 +64,22 @@ CONF_2d0m_1d1m_sizeM_colD = {
     'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
     'size': pylow.Measure('Quantity'),
     'color': pylow.Dimension('Region'),
-    'mark_type': pylow.plot_config.MarkType.LINE
+    'mark_type': pylow.plot_config.MarkType.CIRCLE
+}
+
+CONF_2d0m_1d1m_sizeM_colD = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
+    'size': pylow.Measure('Quantity'),
+    'color': pylow.Dimension('Region'),
+    'mark_type': pylow.plot_config.MarkType.CIRCLE
+}
+
+CONF_2d0m_1d1m_sizeN_colDX = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
+    'color': pylow.Dimension('State'),
+    'mark_type': pylow.plot_config.MarkType.CIRCLE
 }
 
 CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
@@ -80,7 +95,8 @@ CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     # (CONF_2d0m_1d1m_sizeM, 3, 1),
     # (CONF_2d0m_1d1m_sizeN, 3, 1),
 
-    (CONF_2d0m_1d1m_sizeM_colD, 3, 1)
+    # (CONF_2d0m_1d1m_sizeM_colD, 3, 1)
+    (CONF_2d0m_1d1m_sizeN_colDX, 3, 1)
 ])
 
 

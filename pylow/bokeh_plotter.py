@@ -3,20 +3,20 @@ import pathlib
 from collections import defaultdict, namedtuple
 from functools import reduce
 from itertools import chain
-from typing import Dict, Generator, List, Tuple, Union, Any
+from typing import Any, Dict, Generator, List, Tuple, Union
 
+from bokeh.core.properties import field
 from bokeh.io import output_notebook, show
 from bokeh.layouts import gridplot
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
                           ColumnDataSource, DataRange1d, FactorRange, Grid,
-                          HoverTool, Line, LinearAxis, Plot, Range1d,
+                          HoverTool, Line, LinearAxis, Patch, Plot, Range1d,
                           SingleIntervalTicker)
 from bokeh.models.annotations import Label, Title
 from bokeh.models.axes import Axis
 from bokeh.models.glyphs import Circle, Glyph, Line, Text, VBar
 from bokeh.models.ranges import Range
 from bokeh.models.tickers import Ticker
-from bokeh.sampledata.sprint import sprint
 
 from .aggregator import Aggregator
 from .datasource import Datasource
@@ -26,6 +26,7 @@ from .utils import make_unique_string_list
 
 SIZE_COLNAME = '_size'
 COLOR_COLNAME = '_color'
+
 
 class BokehPlotter:
 
@@ -150,18 +151,34 @@ class BokehPlotter:
 
         mark_type = self.aggregator.config.mark_type
         if mark_type == MarkType.LINE:
-            # TODO FIXME Use multiline to handle colors and sizes
-            return Line(x=x_colname, y=y_colname)
+            # TODO FIXME: Does currently not work, maybe fix in bokeh and send PR?
+            return Line(
+                x=field(x_colname),
+                y=field(y_colname)
+            )
         elif mark_type == MarkType.BAR:
-            return VBar(x=x_colname, top=y_colname, fill_color=COLOR_COLNAME, line_color=COLOR_COLNAME, width=SIZE_COLNAME)
+            return VBar(
+                x=field(x_colname),
+                top=field(y_colname),
+                fill_color=field(COLOR_COLNAME),
+                line_color=field(COLOR_COLNAME),
+                width=SIZE_COLNAME
+            )
         elif mark_type == MarkType.CIRCLE:
-            return Circle(x=x_colname, y=y_colname, fill_color=COLOR_COLNAME, line_color=COLOR_COLNAME, size=SIZE_COLNAME)
+            return Circle(
+                x=field(x_colname),
+                y=field(y_colname),
+                fill_color=field(COLOR_COLNAME),
+                line_color=field(COLOR_COLNAME),
+                size=field(SIZE_COLNAME)
+            )
         else:
             assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
     def _get_range(self, data: PlotInfo, axis: str) -> Range:
         """ Creates a bokeh.Range object for the given axis & data"""
 
+        # TODO FIXME check based on dimension/measure instead of IS_STR
         values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         if isinstance(values[0], str):
             return FactorRange(*values)
