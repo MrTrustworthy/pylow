@@ -5,13 +5,14 @@ import * as p from "core/properties"
 
 # We will subclass in JavaScript from the same class that was subclassed
 # from in Python
-import {Line, LineView} from "models/glyphs/line"
+import {Patch, PatchView} from "models/glyphs/patch"
 
 # This model will actually need to render things, so we must provide
 # view. The LayoutDOM model has a view already, so we will start with that
-export class FlexLineView extends LineView
+export class FlexLineView extends PatchView
 
   initialize: (options) ->
+    # Object {model: FlexLine, renderer: e, plot_view: e}
     super(options)
 
     # @render()
@@ -20,21 +21,33 @@ export class FlexLineView extends LineView
     # event, we can process the new data
     # @listenTo(@model.slider, 'change', () => @render())
 
-  render: () ->
-    super
-    # Backbone Views create <div> elements by default, accessible as @el.
-    # Many Bokeh views ignore this default <div>, and instead do things
-    # like draw to the HTML canvas. In this case though, we change the
-    # contents of the <div>, based on the current slider value.
-    # empty(@el)
-    # @el.appendChild(div({
-    #   style: {
-    #     color: '#686d8e'
-    #     'background-color': '#2a3153'
-    #   }
-    # }, "#{@model.text}: #{@model.slider.value}"))
+  render: (ctx, indices, {sx, sy, _line_width}) ->
+    if @visuals.line.doit
+      # @visuals.line.set_value(ctx) need to set manually
 
-export class FlexLine extends Line
+      pointsOneway = indices.length
+      totalPoints = pointsOneway * 2
+      indicies = [0..pointsOneway - 1].concat [pointsOneway - 1..0]
+
+      isOnFirstWay = true
+      for i in indicies
+        debugger
+        sxVal = sx[i]
+        syVal = sy[i] + (if isOnFirstWay then _line_width[i] else - _line_width[i])
+
+        if i == 0 and isOnFirstWay
+          ctx.beginPath()
+          ctx.moveTo(sxVal, syVal)
+        else
+          ctx.lineTo(sxVal, syVal)
+
+        if i == pointsOneway - 1
+          isOnFirstWay = false
+
+      ctx.closePath()
+      ctx.stroke()
+
+export class FlexLine extends Patch
 
   # If there is an associated view, this is boilerplate.
   default_view: FlexLineView

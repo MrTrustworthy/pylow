@@ -6,7 +6,7 @@ from itertools import chain
 from typing import Any, Dict, Generator, List, Tuple, Union
 
 from bokeh.core.properties import field
-from bokeh.io import output_notebook, show
+from bokeh.io import show
 from bokeh.layouts import gridplot
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
                           ColumnDataSource, DataRange1d, FactorRange, Grid,
