@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pylow  # noqa
 import pytest  # noqa
 from bokeh.io import show
-from bokeh.models import ColumnDataSource, Line, Plot, Range1d
+from bokeh.models import ColumnDataSource, Line, Plot, Range1d, LinearAxis
 
 
 
@@ -22,7 +22,7 @@ def test_flexline():
 
     source = ColumnDataSource(data=data)
 
-    glyph = pylow.FlexLine(x='x', y='y', line_width='size')
+    glyph = pylow.FlexLine(x='x', y='y', size='size', colors='colors')
 
     options = {
         'plot_width': 800,
@@ -33,6 +33,8 @@ def test_flexline():
     }
     plot = Plot(**options)
     plot.add_glyph(source, glyph)
+    plot.add_layout(LinearAxis(), 'below')
+    plot.add_layout(LinearAxis(), 'left')
     show(plot)
 
 if __name__ == '__main__':

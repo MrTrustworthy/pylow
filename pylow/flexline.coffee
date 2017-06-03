@@ -5,49 +5,53 @@ import * as p from "core/properties"
 
 # We will subclass in JavaScript from the same class that was subclassed
 # from in Python
-import {Patch, PatchView} from "models/glyphs/patch"
+import {XYGlyph, XYGlyphView} from "models/glyphs/xy_glyph"
+
 
 # This model will actually need to render things, so we must provide
 # view. The LayoutDOM model has a view already, so we will start with that
-export class FlexLineView extends PatchView
+export class FlexLineView extends XYGlyphView
 
   initialize: (options) ->
-    # Object {model: FlexLine, renderer: e, plot_view: e}
     super(options)
 
-    # @render()
 
-    # Set Backbone listener so that when the Bokeh slider has a change
-    # event, we can process the new data
-    # @listenTo(@model.slider, 'change', () => @render())
+  render: (ctx, indices, {sx, sy, _size, _colors}) ->
+    @visuals.fill.set_value(ctx)
+    pointsOneway = indices.length
 
-  render: (ctx, indices, {sx, sy, _line_width}) ->
-    if @visuals.line.doit
-      # @visuals.line.set_value(ctx) need to set manually
+    # TODO flip color axis based on optional parameter 'flipped'
+    # make the color a gradient
+    gradient = ctx.createLinearGradient(sx[0], 0, sx[pointsOneway-1], 0)
+    for color, i in _colors
+      position = i / (_colors.length - 1)
+      gradient.addColorStop(position, color)
+    ctx.fillStyle = gradient
 
-      pointsOneway = indices.length
-      totalPoints = pointsOneway * 2
-      indicies = [0..pointsOneway - 1].concat [pointsOneway - 1..0]
+    # line must go one way & back
+    allPointIndicies = [0..pointsOneway - 1].concat [pointsOneway - 1..0]
 
-      isOnFirstWay = true
-      for i in indicies
-        debugger
-        sxVal = sx[i]
-        syVal = sy[i] + (if isOnFirstWay then _line_width[i] else - _line_width[i])
+    # for each point, have two Y values (line forwards & line backwards)
+    isOnFirstWay = true
+    for i in allPointIndicies
+      sxVal = sx[i]
+      # TODO flip width to apply to X-axis for flipped lines
+      syVal = sy[i] + (if isOnFirstWay then _size[i] else - _size[i])
 
-        if i == 0 and isOnFirstWay
-          ctx.beginPath()
-          ctx.moveTo(sxVal, syVal)
-        else
-          ctx.lineTo(sxVal, syVal)
+      if i == 0 and isOnFirstWay
+        ctx.beginPath()
+        ctx.moveTo(sxVal, syVal)
+      else
+        ctx.lineTo(sxVal, syVal)
 
-        if i == pointsOneway - 1
-          isOnFirstWay = false
+      # flip orientation once we have reached the end of the 1st line
+      if i == pointsOneway - 1
+        isOnFirstWay = false
 
-      ctx.closePath()
-      ctx.stroke()
+    ctx.closePath()
+    ctx.fill()
 
-export class FlexLine extends Patch
+export class FlexLine extends XYGlyph
 
   # If there is an associated view, this is boilerplate.
   default_view: FlexLineView
@@ -55,13 +59,16 @@ export class FlexLine extends Patch
   # The ``type`` class attribute should generally match exactly the name
   # of the corresponding Python class.
   type: "FlexLine"
+  @mixins ['line', 'fill']
 
   # The @define block adds corresponding "properties" to the JS model. These
   # should basically line up 1-1 with the Python model class. Most property
   # types have counterparts, e.g. bokeh.core.properties.String will be
   # p.String in the JS implementation. Where the JS type system is not yet
   # as rich, you can use p.Any as a "wildcard" property type.
-  # @define {
-  #   text:   [ p.String ]
-  #   slider: [ p.Any    ]
-  # }
+  @define {
+    sx: [p.NumberSpec]
+    sy: [p.NumberSpec]
+    size: [p.NumberSpec]
+    colors: [p.ColorSpec]
+  }
