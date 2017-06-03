@@ -59,15 +59,15 @@ CONF_2d0m_1d1m_sizeM = {
     'size': pylow.Measure('Quantity')
 }
 
-CONF_2d0m_1d1m_sizeM_colD = {
+CONF_2d0m_1d1m_sizeM_colD_line = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
     'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
     'size': pylow.Measure('Quantity'),
     'color': pylow.Dimension('Region'),
-    'mark_type': pylow.plot_config.MarkType.CIRCLE
+    'mark_type': pylow.plot_config.MarkType.LINE
 }
 
-CONF_2d0m_1d1m_sizeM_colD = {
+CONF_2d0m_1d1m_sizeM_colD_circle = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
     'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
     'size': pylow.Measure('Quantity'),
@@ -78,7 +78,7 @@ CONF_2d0m_1d1m_sizeM_colD = {
 CONF_2d0m_1d1m_sizeN_colDX = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
     'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
-    'color': pylow.Dimension('State'),
+    'color': pylow.Dimension('Region'),
     'mark_type': pylow.plot_config.MarkType.CIRCLE
 }
 
@@ -96,7 +96,7 @@ CONFIG_ROTATE = pytest.mark.parametrize("config,dimensions,measures", [
     # (CONF_2d0m_1d1m_sizeN, 3, 1),
 
     # (CONF_2d0m_1d1m_sizeM_colD, 3, 1)
-    (CONF_2d0m_1d1m_sizeN_colDX, 3, 1)
+    (CONF_2d0m_1d1m_sizeM_colD_line, 3, 1)
 ])
 
 
@@ -184,4 +184,4 @@ def test_example(config, dimensions, measures):
 
 
 if __name__ == '__main__':
-    pytest.main(['-s'])
+    pytest.main(['-s', 'test/test_bokeh.py'])

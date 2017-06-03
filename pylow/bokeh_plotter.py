@@ -23,6 +23,7 @@ from .datasource import Datasource
 from .plot_config import Attribute, Dimension, MarkType, Measure, VizConfig
 from .plotinfo import AVP, PlotInfo
 from .utils import make_unique_string_list
+from .flexline import FlexLine
 
 SIZE_COLNAME = '_size'
 COLOR_COLNAME = '_color'
@@ -151,10 +152,11 @@ class BokehPlotter:
 
         mark_type = self.aggregator.config.mark_type
         if mark_type == MarkType.LINE:
-            # TODO FIXME: Does currently not work, maybe fix in bokeh and send PR?
-            return Line(
+            return FlexLine(
                 x=field(x_colname),
-                y=field(y_colname)
+                y=field(y_colname),
+                size=field(SIZE_COLNAME),
+                colors=field(COLOR_COLNAME)
             )
         elif mark_type == MarkType.BAR:
             return VBar(
