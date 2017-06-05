@@ -7,7 +7,7 @@ from numpy import number
 from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
-from .plotinfo import AVP, PlotInfo
+from .plotinfo import AVP, PlotInfo, PlotInfoBuilder
 from .utils import reverse_lerp
 
 
@@ -20,6 +20,7 @@ class Aggregator:
         self.data = None  # type: List[PlotInfo]
         self.ncols, self.nrows, self.x_min, self.x_max, self.y_min, self.y_max = (0, 0, 0, 0, 0, 0)
 
+    # TODO FIXME move to config!
     @property
     def all_attrs(self):
         return list(chain(self.config.dimensions, self.config.measures))
@@ -39,6 +40,7 @@ class Aggregator:
     @property
     def last_row(self):
         return self.config.rows[-1]
+    # END FIXME
 
     def is_in_first_column(self, plot_info: PlotInfo) -> bool:
         return self.data.index(plot_info) % self.ncols == 0
@@ -55,24 +57,13 @@ class Aggregator:
     def update_data(self) -> None:
         raw_data = self._get_prepared_data()
         prepared = self._get_assigned_data(raw_data)
-        final_data = list(set(self._make_plot_info(d) for d in prepared))  # may yield duplicates
-        # sort data so that dimensions and measures stay grouped
-        final_data.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
-        PlotInfo.clear_point_cache()
+
+        final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self)
 
         self._add_plot_info_sizes_and_colors(final_data)
         self._update_data_attributes(final_data)
 
         self.data = final_data
-
-    def _make_plot_info(self, plot_data: List[AVP]) -> PlotInfo:
-
-        x_coords = [plot_data[self.all_attrs.index(self.last_column)]]
-        y_coords = [plot_data[self.all_attrs.index(self.last_row)]]
-        x_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_columns]
-        y_seps = [plot_data[self.all_attrs.index(col)] for col in self.previous_rows]
-        plotinfo = PlotInfo.create_new_or_update(x_coords, y_coords, x_seps, y_seps)
-        return plotinfo
 
     # sizes and colors
     def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo]) -> None:

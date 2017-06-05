@@ -54,6 +54,7 @@ class VizConfig:
         self._columns = []  # type: List[Attribute]
         self._rows = []  # type: List[Attribute]
         self.color = None  # type: Attribute
+        self.color_sep = None  # type: Attribute
         self.size = None  # type: Attribute
         self.mark_type = None  # type: MarkType
 
@@ -62,10 +63,20 @@ class VizConfig:
         vc = cls()
         vc.columns.extend(_dict['columns'])
         vc.rows.extend(_dict['rows'])
-        vc.color = _dict.get('color', None)
+
+        color = _dict.get('color', None)
+        if color in vc.columns_and_rows:
+            vc.color = color
+        else:
+            vc.color_sep = color
+
         vc.size = _dict.get('size', None)
         vc.mark_type = _dict.get('mark_type', MarkType.CIRCLE)
         return vc
+
+    @property
+    def columns_and_rows(self) -> List[Attribute]:
+        return self.columns + self.rows
 
     @property
     def columns(self) -> List[Attribute]:
@@ -77,11 +88,11 @@ class VizConfig:
 
     @property
     def dimensions(self) -> List[Attribute]:
-        return self._find_attrs(chain(self.columns, self.rows), Dimension)
+        return self._find_attrs(chain(self.columns, self.rows, [self.color_sep]), Dimension)
 
     @property
     def measures(self) -> List[Attribute]:
-        return self._find_attrs(chain(self.columns, self.rows), Measure)
+        return self._find_attrs(chain(self.columns, self.rows, [self.color_sep]), Measure)
 
     @property
     def column_dimensions(self) -> List[Attribute]:
