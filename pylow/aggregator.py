@@ -7,9 +7,9 @@ from numpy import number
 from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, Measure, VizConfig
-from .plotinfo import AVP, PlotInfo, PlotInfoBuilder
+from .plotinfo import PlotInfo, PlotInfoBuilder
 from .utils import reverse_lerp
-
+from .avp import AVP
 
 class Aggregator:
 
@@ -19,28 +19,6 @@ class Aggregator:
 
         self.data = None  # type: List[PlotInfo]
         self.ncols, self.nrows, self.x_min, self.x_max, self.y_min, self.y_max = (0, 0, 0, 0, 0, 0)
-
-    # TODO FIXME move to config!
-    @property
-    def all_attrs(self):
-        return list(chain(self.config.dimensions, self.config.measures))
-
-    @property
-    def previous_columns(self):
-        return self.config.columns[:-1]
-
-    @property
-    def last_column(self):
-        return self.config.columns[-1]
-
-    @property
-    def previous_rows(self):
-        return self.config.rows[:-1]
-
-    @property
-    def last_row(self):
-        return self.config.rows[-1]
-    # END FIXME
 
     def is_in_first_column(self, plot_info: PlotInfo) -> bool:
         return self.data.index(plot_info) % self.ncols == 0
@@ -55,23 +33,25 @@ class Aggregator:
         return self.data.index(plot_info) == (self.ncols - 1) // 2
 
     def update_data(self) -> None:
+
         raw_data = self._get_prepared_data()
         prepared = self._get_assigned_data(raw_data)
 
-        final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self)
+        final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self.config)
 
-        self._add_plot_info_sizes_and_colors(final_data)
+        self._add_plot_info_sizes_and_colors(final_data, prepared)
         self._update_data_attributes(final_data)
 
         self.data = final_data
 
+    # TODO FIXME Move to plotinfobuilder, this is so ugly here
     # sizes and colors
-    def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo]) -> None:
+    def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo], raw_data: List[List[AVP]]) -> None:
         for attr in ('size', 'color'):
             if getattr(self.config, attr) is not None:
-                self._add_plot_info_sizes_and_colors_from_conf(data, attr)
+                self._add_plot_info_sizes_and_colors_from_conf(data, raw_data, attr)
 
-    def _add_plot_info_sizes_and_colors_from_conf(self, data: List[PlotInfo], attr: str) -> None:
+    def _add_plot_info_sizes_and_colors_from_conf(self, data: List[PlotInfo], raw_data: List[List[AVP]], attr: str) -> None:
         # find all possible values that are in any plot of the screen
         config_attribute = getattr(self.config, attr)
         val_variation_lists = (plotinfo.variations_of(config_attribute) for plotinfo in data)
@@ -80,11 +60,11 @@ class Aggregator:
         for plot_info in data:
             # get the values of the size- or color-attribute of the current plotinfo
             # TODO FIXME: Find out how to handle cases where the attribute is not elsewhere on the plot
-            size_attribute_vals = [avp.val for avp in plot_info.all if avp.attr == config_attribute]
+            attribute_vals = [avp.val for avp in plot_info.find_attributes(config_attribute)]            
             # create a avp with (Attribute, float_of_size or hex_of_color) for each value
             getter_func = getattr(self, f'_get_{attr}_data')
-            size_avps = [getter_func(curr_val, val_variations) for curr_val in size_attribute_vals]
-            setattr(plot_info, f'{attr}s', size_avps)
+            avps = [getter_func(curr_val, val_variations) for curr_val in attribute_vals]
+            setattr(plot_info, f'{attr}s', avps)
 
     def _get_size_data(self, current_val: Any, possible_vals: List[Any]) -> AVP:
         if isinstance(self.config.size, Dimension):
@@ -142,7 +122,7 @@ class Aggregator:
     def _get_assigned_data(self, data) -> List[List[AVP]]:
         out = []
         for key_tuple, val_list in data.items():
-            vals = [AVP(a, v) for a, v in zip(self.all_attrs, chain(key_tuple, val_list))]
+            vals = [AVP(a, v) for a, v in zip(self.config.all_attrs, chain(key_tuple, val_list))]
             out.append(vals)
         return out
 

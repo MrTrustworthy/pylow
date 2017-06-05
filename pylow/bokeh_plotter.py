@@ -21,12 +21,11 @@ from bokeh.models.tickers import Ticker
 from .aggregator import Aggregator
 from .datasource import Datasource
 from .plot_config import Attribute, Dimension, MarkType, Measure, VizConfig
-from .plotinfo import AVP, PlotInfo
-from .utils import make_unique_string_list
+from .plotinfo import PlotInfo
+from .utils import make_unique_string_list, unique_list
 from .flexline import FlexLine
+from .avp import AVP
 
-SIZE_COLNAME = '_size'
-COLOR_COLNAME = '_color'
 
 
 class BokehPlotter:
@@ -50,7 +49,7 @@ class BokehPlotter:
         Will delegate the parts of plot creation to other methods
         """
 
-        x_colname, y_colname, source = self._prepare_viz_data(plot_info)
+        x_colname, y_colname, color_colname, size_colname, source = self._prepare_viz_data(plot_info)
 
         # RANGES
         x_range, y_range = self._get_range(plot_info, 'x'), self._get_range(plot_info, 'y')
@@ -64,7 +63,7 @@ class BokehPlotter:
         self._add_axes_and_grids(plot, plot_info)
 
         # GLYPH
-        glyph = self._create_glyph(x_colname, y_colname)
+        glyph = self._create_glyph(x_colname, y_colname, color_colname, size_colname)
         renderer = plot.add_glyph(source, glyph)
 
         # HOVER
@@ -75,17 +74,9 @@ class BokehPlotter:
     def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, ColumnDataSource]:
         """ Create a representation of the data for plotting that is suitable for consumption by bokeh"""
 
-        x_colname = plot_info.x_coords[0].attr.col_name
-        y_colname = plot_info.y_coords[0].attr.col_name
-        # DATA
-        data = {
-            x_colname: [avp.val for avp in plot_info.x_coords],
-            y_colname: [avp.val for avp in plot_info.y_coords],
-            COLOR_COLNAME: [avp.val for avp in plot_info.colors],
-            SIZE_COLNAME: [self.aggregator.config.get_glyph_size(avp.val) for avp in plot_info.sizes]
-        }
+        x_colname, y_colname, color_colname, size_colname, data = plot_info.get_viz_data(self.aggregator.config)
         source = ColumnDataSource(data=data)
-        return x_colname, y_colname, source
+        return x_colname, y_colname, color_colname, size_colname, source
 
     def _get_plot_options(self, plot_info: PlotInfo, x_range: Range, y_range: Range) -> Dict[str, Any]:
         """ Create the configuration object to instantiate a bokeh.Plot object"""
@@ -147,7 +138,7 @@ class BokehPlotter:
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
-    def _create_glyph(self, x_colname: str, y_colname: str) -> Glyph:
+    def _create_glyph(self, x_colname: str, y_colname: str, color_colname: str, size_colname: str) -> Glyph:
         """ Creates a glyph based on the configuration"""
 
         mark_type = self.aggregator.config.mark_type
@@ -155,24 +146,24 @@ class BokehPlotter:
             return FlexLine(
                 x=field(x_colname),
                 y=field(y_colname),
-                size=field(SIZE_COLNAME),
-                colors=field(COLOR_COLNAME)
+                size=field(size_colname),
+                colors=field(color_colname)
             )
         elif mark_type == MarkType.BAR:
             return VBar(
                 x=field(x_colname),
                 top=field(y_colname),
-                fill_color=field(COLOR_COLNAME),
-                line_color=field(COLOR_COLNAME),
-                width=SIZE_COLNAME
+                fill_color=field(color_colname),
+                line_color=field(color_colname),
+                width=field(size_colname)
             )
         elif mark_type == MarkType.CIRCLE:
             return Circle(
                 x=field(x_colname),
                 y=field(y_colname),
-                fill_color=field(COLOR_COLNAME),
-                line_color=field(COLOR_COLNAME),
-                size=field(SIZE_COLNAME)
+                fill_color=field(color_colname),
+                line_color=field(color_colname),
+                size=field(size_colname)
             )
         else:
             assert False, f'VizConfig.mark_type must be one of {MarkType}'
@@ -181,7 +172,7 @@ class BokehPlotter:
         """ Creates a bokeh.Range object for the given axis & data"""
 
         # TODO FIXME check based on dimension/measure instead of IS_STR
-        values = [avp.val for avp in getattr(data, f'{axis}_coords')]
+        values = unique_list([avp.val for avp in getattr(data, f'{axis}_coords')])
         if isinstance(values[0], str):
             return FactorRange(*values)
         else:

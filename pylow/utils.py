@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Any
 
 Number = Union[int, float]
 
@@ -13,6 +13,14 @@ def make_unique_string_list(content: List[str]):
         s.add(word)
         new.append(word)
     return new
+
+def unique_list(content: List[Any]) -> List[Any]:
+    """ Can't rely on sets to preserve order """
+    out = []
+    for c in content:
+        if c not in out:
+            out.append(c)
+    return out
 
 def reverse_lerp(point: Number, pointlist: List[Number]) -> float:
     _min, _max = min(pointlist), max(pointlist)

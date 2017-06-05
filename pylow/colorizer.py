@@ -1,3 +1,8 @@
+from typing import List, Tuple
+from itertools import cycle
+from .avp import AVP
+
+
 BLUE = '#1f77b4'
 ORANGE = '#ff7f0e'
 GREEN = '#2ca02c'
@@ -27,10 +32,17 @@ def to_hex(r: int, g: int, b: int) -> str:
     return '#{0:02x}{1:02x}{2:02x}'.format(r, g, b)
 
 
-def to_rgb(color: str):
+def to_rgb(color: str) -> Tuple[int]:
     assert isinstance(color, str) and color.startswith('#') and len(color) == 7, 'Color must be a string'
     return int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
 
 
-def to_valid_rgb(color: int):
+def to_valid_rgb(color: int) -> int:
     return int(max(min(color, 255), 0))
+
+
+def get_colors_for_color_separators(col_seps: List['AVP']) -> None:
+    all_values = set(avp.val for avp in col_seps)
+    val_to_color = dict(zip(all_values, cycle(ALL_COLORS)))
+    for avp in col_seps:
+        yield AVP(avp.attr, val_to_color[avp.val])

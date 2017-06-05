@@ -1,9 +1,10 @@
 from collections import namedtuple
-from itertools import chain
 from enum import Enum, unique
+from itertools import chain
 from typing import List, Union
-Number = Union[int, float]
 
+Number = Union[int, float]
+from .utils import unique_list
 
 class Attribute:
 
@@ -39,6 +40,7 @@ class Measure(Attribute):
 
 MarkInfo = namedtuple('MarkInfo', ['glyph_name', 'glyph_size_factor'])
 
+
 @unique
 class MarkType(Enum):
     CIRCLE = MarkInfo('Circle', 10)
@@ -65,7 +67,7 @@ class VizConfig:
         vc.rows.extend(_dict['rows'])
 
         color = _dict.get('color', None)
-        if color in vc.columns_and_rows:
+        if color in vc.columns_and_rows or isinstance(color, Measure):
             vc.color = color
         else:
             vc.color_sep = color
@@ -88,11 +90,11 @@ class VizConfig:
 
     @property
     def dimensions(self) -> List[Attribute]:
-        return self._find_attrs(chain(self.columns, self.rows, [self.color_sep]), Dimension)
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Dimension))
 
     @property
     def measures(self) -> List[Attribute]:
-        return self._find_attrs(chain(self.columns, self.rows, [self.color_sep]), Measure)
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Measure))
 
     @property
     def column_dimensions(self) -> List[Attribute]:
@@ -109,6 +111,26 @@ class VizConfig:
     @property
     def row_measures(self) -> List[Attribute]:
         return self._find_attrs(self.rows, Measure)
+
+    @property
+    def all_attrs(self):
+        return list(chain(self.dimensions, self.measures))
+
+    @property
+    def previous_columns(self):
+        return self.columns[:-1]
+
+    @property
+    def last_column(self):
+        return self.columns[-1]
+
+    @property
+    def previous_rows(self):
+        return self.rows[:-1]
+
+    @property
+    def last_row(self):
+        return self.rows[-1]
 
     def _find_attrs(self, iterable: List[Attribute], attr_class: Attribute):
         return list(filter(lambda elem: isinstance(elem, attr_class), iterable))

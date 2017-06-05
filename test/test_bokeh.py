@@ -8,6 +8,7 @@ import pylow  # noqa
 import pytest  # noqa
 
 
+
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
 TEST_FILE = TESTDATA_PATH / 'testdata.csv'
 
@@ -67,10 +68,10 @@ CONF_2d0m_1d1m_sizeM_colD_line = {
     'mark_type': pylow.plot_config.MarkType.LINE
 }
 
+
 CONF_2d0m_1d1m_sizeN_colN_circle = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
     'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
-    'size': pylow.Measure('Quantity'),
     'mark_type': pylow.plot_config.MarkType.CIRCLE
 }
 
@@ -80,6 +81,12 @@ CONF_2d0m_1d1m_sizeN_colD_circle = {
     'color': pylow.Dimension('Region'),
     'mark_type': pylow.plot_config.MarkType.CIRCLE
 }
+CONF_2d0m_1d1m_sizeN_colM_circle = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
+    'color': pylow.Measure('Quantity'),
+    'mark_type': pylow.plot_config.MarkType.CIRCLE
+}
 
 CONF_2d0m_1d1m_sizeN_colDX_circle = {
     'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
@@ -87,17 +94,29 @@ CONF_2d0m_1d1m_sizeN_colDX_circle = {
     'color': pylow.Dimension('State'),
     'mark_type': pylow.plot_config.MarkType.CIRCLE
 }
+CONF_2d0m_1d1m_sizeN_colMX_circle = {
+    'columns': [pylow.Dimension('Category'), pylow.Dimension('Region')],
+    'rows': [pylow.Dimension('Ship Mode'), pylow.Measure('Quantity')],
+    'color': pylow.Measure('Profit'),
+    'mark_type': pylow.plot_config.MarkType.CIRCLE
+}
 
 CONFIG_ROTATE = pytest.mark.parametrize("config,infos", [
 
-    (CONF_2d0m_1d1m_sizeN_colN_circle,
-        {'dimensions':3,'measures': 1,'plots': 12, 'color': None, 'color_sep': None}
-    ),
-    (CONF_2d0m_1d1m_sizeN_colD_circle,
-        {'dimensions':3,'measures': 1,'plots': 12, 'color': 1, 'color_sep': None}
-    ),
-    (CONF_2d0m_1d1m_sizeN_colDX_circle,
-        {'dimensions':4,'measures': 1,'plots': 12, 'color': None, 'color_sep': 1}
+    # (CONF_2d0m_1d1m_sizeN_colN_circle,
+    #     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': None}
+    #  ),
+    # (CONF_2d0m_1d1m_sizeN_colD_circle,
+    #     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None}
+    #  ),
+    (CONF_2d0m_1d1m_sizeN_colM_circle,
+        {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None}
+     ),
+    # (CONF_2d0m_1d1m_sizeN_colDX_circle,
+    #     {'dimensions': 4, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': 1}
+    #  ),
+    (CONF_2d0m_1d1m_sizeN_colMX_circle, # FIXME color looks weird, check it out!
+        {'dimensions': 3, 'measures': 2, 'plots': 12, 'color': 1, 'color_sep': None}
     )
 ])
 
@@ -107,6 +126,9 @@ def test_config_builder(config, infos):
     pc = pylow.VizConfig.from_dict(config)
     assert len(pc.dimensions) == infos['dimensions']
     assert len(pc.measures) == infos['measures']
+
+    # color and color sep are mutually exclusive
+    assert pc.color is None or pc.color_sep is None
 
     if infos['color'] is None:
         assert pc.color is None
@@ -173,6 +195,7 @@ def test_output_coloring_measures():
             color = plotinfo.colors[i].val
             assert isinstance(color, str) and len(color) == 7
 
+
 @pytest.mark.skip()
 def test_output_coloring_dimensions():
     pc = pylow.VizConfig.from_dict(CONF_2d0m_1d1m_colD)
@@ -212,8 +235,6 @@ def test_output_ordering():
     assert all(x.x_seps[-1].val == 'Technology' for x in data[2::3]), f'{x.x_seps[-1].val for x in data[2::3]}'
 
 # @pytest.mark.skip()
-
-
 
 
 if __name__ == '__main__':
