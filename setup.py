@@ -4,8 +4,8 @@ from setuptools import setup
 
 def test_suite():
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('tests', pattern='test_*.py')
-    return test_suite
+    suite = test_loader.discover('tests', pattern='test_*.py')
+    return suite
 
 setup(
     name='Tapylow',

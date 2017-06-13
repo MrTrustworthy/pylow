@@ -1,6 +1,9 @@
+from collections import namedtuple
+from enum import unique, Enum
 from typing import List, Union, Any
 
 Number = Union[int, float]
+
 
 def make_unique_string_list(content: List[str]):
     s = set()
@@ -14,6 +17,7 @@ def make_unique_string_list(content: List[str]):
         new.append(word)
     return new
 
+
 def unique_list(content: List[Any]) -> List[Any]:
     """ Can't rely on sets to preserve order """
     out = []
@@ -22,9 +26,20 @@ def unique_list(content: List[Any]) -> List[Any]:
             out.append(c)
     return out
 
+
 def reverse_lerp(point: Number, pointlist: List[Number]) -> float:
     _min, _max = min(pointlist), max(pointlist)
-    range = _max - _min
+    value_range = _max - _min
     abs_in_range = point - _min
-    relative_in_range = (abs_in_range/range)
+    relative_in_range = (abs_in_range / value_range)
     return relative_in_range
+
+
+MarkInfo = namedtuple('MarkInfo', ['glyph_name', 'glyph_size_factor'])
+
+
+@unique
+class MarkType(Enum):
+    CIRCLE = MarkInfo('Circle', 10)
+    BAR = MarkInfo('VBar', 0.25)
+    LINE = MarkInfo('Line', 1)

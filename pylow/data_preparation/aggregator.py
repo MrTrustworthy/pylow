@@ -1,15 +1,18 @@
 from functools import reduce
 from itertools import chain
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
-from numpy import number
-
-from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
-from .datasource import Datasource
-from .plot_config import Attribute, Dimension, Measure, VizConfig
-from .plotinfo import PlotInfo, PlotInfoBuilder
-from .utils import reverse_lerp
 from .avp import AVP
+from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
+from numpy import number  # noinspection
+
+from pylow.data.datasource import Datasource
+from pylow.data.vizconfig import VizConfig
+from pylow.data.attributes import Dimension
+from pylow.data_preparation.plotinfo import PlotInfo
+from pylow.data_preparation.plotinfobuilder import PlotInfoBuilder
+from pylow.utils import reverse_lerp
+
 
 class Aggregator:
 
@@ -60,7 +63,7 @@ class Aggregator:
         for plot_info in data:
             # get the values of the size- or color-attribute of the current plotinfo
             # TODO FIXME: Find out how to handle cases where the attribute is not elsewhere on the plot
-            attribute_vals = [avp.val for avp in plot_info.find_attributes(config_attribute)]            
+            attribute_vals = [avp.val for avp in plot_info.find_attributes(config_attribute)]
             # create a avp with (Attribute, float_of_size or hex_of_color) for each value
             getter_func = getattr(self, f'_get_{attr}_data')
             avps = [getter_func(curr_val, val_variations) for curr_val in attribute_vals]

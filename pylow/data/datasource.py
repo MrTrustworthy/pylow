@@ -1,9 +1,9 @@
 
-from typing import Callable, List, Optional, Generator, Tuple, Union
+from typing import Callable, Optional, Union
 
 import pandas
 
-from .plot_config import VizConfig, Dimension, Measure, Attribute
+from .attributes import Attribute
 
 
 class Datasource:

@@ -1,11 +1,8 @@
-
-from bokeh.core.properties import String, Instance, NumberSpec, ColorSpec
-from bokeh.models import Line, Glyph
-
+from bokeh.core.properties import NumberSpec, ColorSpec
+from bokeh.models import Glyph
 
 
 class FlexLine(Glyph):
-
     __implementation__ = 'flexline.coffee'
 
     x = NumberSpec()

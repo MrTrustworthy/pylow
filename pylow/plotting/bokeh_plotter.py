@@ -1,35 +1,27 @@
-
-import pathlib
-from collections import defaultdict, namedtuple
-from functools import reduce
 from itertools import chain
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, Tuple
 
 from bokeh.core.properties import field
 from bokeh.io import show
 from bokeh.layouts import gridplot
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
-                          ColumnDataSource, DataRange1d, FactorRange, Grid,
-                          HoverTool, Line, LinearAxis, Patch, Plot, Range1d,
-                          SingleIntervalTicker)
+                          ColumnDataSource, FactorRange, Grid,
+                          HoverTool, LinearAxis, Plot, Range1d)
 from bokeh.models.annotations import Label, Title
 from bokeh.models.axes import Axis
-from bokeh.models.glyphs import Circle, Glyph, Line, Text, VBar
+from bokeh.models.glyphs import Circle, Glyph, VBar
 from bokeh.models.ranges import Range
 from bokeh.models.tickers import Ticker
 
-from .aggregator import Aggregator
-from .datasource import Datasource
-from .plot_config import Attribute, Dimension, MarkType, Measure, VizConfig
-from .plotinfo import PlotInfo
-from .utils import make_unique_string_list, unique_list
-from .flexline import FlexLine
-from .avp import AVP
+from pylow.data.datasource import Datasource
+from pylow.data.vizconfig import VizConfig
+from pylow.data_preparation.aggregator import Aggregator
+from pylow.data_preparation.plotinfo import PlotInfo
+from pylow.extensions.flexline import FlexLine
+from pylow.utils import unique_list, MarkType
 
 
-
-class BokehPlotter:
-
+class Plotter:
     def __init__(self, datasource: Datasource, config: VizConfig):
         self.aggregator = Aggregator(datasource, config)
         self.plots = []
@@ -43,7 +35,7 @@ class BokehPlotter:
             plot = self._make_plot(plotinfo)
             self.plots.append(plot)
 
-    def _make_plot(self, plot_info: PlotInfo) -> None:
+    def _make_plot(self, plot_info: PlotInfo) -> Plot:
         """ Main function that orchestrates the creation of a bokeh.Plot object.
 
         Will delegate the parts of plot creation to other methods
@@ -71,7 +63,7 @@ class BokehPlotter:
         plot.add_tools(hover)
         return plot
 
-    def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, ColumnDataSource]:
+    def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, str, str, ColumnDataSource]:
         """ Create a representation of the data for plotting that is suitable for consumption by bokeh"""
 
         x_colname, y_colname, color_colname, size_colname, data = plot_info.get_viz_data(self.aggregator.config)

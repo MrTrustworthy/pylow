@@ -41,4 +41,4 @@ def test_flexline():
     show(plot)
 
 if __name__ == '__main__':
-    pytest.main(['-s', 'test/test_bokeh_multiglyph.py'])
+    pytest.main(['-s', 'test_bokeh_multiglyph.py'])

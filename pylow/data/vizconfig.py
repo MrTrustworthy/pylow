@@ -1,55 +1,13 @@
-from collections import namedtuple
-from enum import Enum, unique
 from itertools import chain
 from typing import List, Union
 
+from pylow.utils import unique_list, MarkType
+from .attributes import Attribute, Dimension, Measure
+
 Number = Union[int, float]
-from .utils import unique_list
-
-class Attribute:
-
-    def __init__(self, col_name: str) -> None:
-        self.col_name = col_name
-
-    def __str__(self) -> str:
-        return self.col_name
-
-    def __repr__(self) -> str:
-        return f'<plot_config.{type(self).__name__}: {self.col_name}>'
-
-    def __eq__(self, other: 'Attribute') -> bool:
-        return type(self).__name__ == type(other).__name__ and self.col_name == other.col_name
-
-
-class Dimension(Attribute):
-
-    def __init__(self, col_name: str) -> None:
-        super().__init__(col_name)
-
-
-class Measure(Attribute):
-
-    def __init__(
-        self,
-        col_name: str,
-        *,
-        aggregation: str='sum',
-    )-> None:
-        super().__init__(col_name)
-        self.aggregation = aggregation
-
-MarkInfo = namedtuple('MarkInfo', ['glyph_name', 'glyph_size_factor'])
-
-
-@unique
-class MarkType(Enum):
-    CIRCLE = MarkInfo('Circle', 10)
-    BAR = MarkInfo('VBar', 0.25)
-    LINE = MarkInfo('Line', 1)
 
 
 class VizConfig:
-
     def __init__(self) -> None:
 
         # non-writeable properties to ensure lists don't get switched out
@@ -138,13 +96,6 @@ class VizConfig:
     def get_glyph_size(self, size: Number) -> Number:
         """Map a 'generic size value' to the concrete size for a given glyph/mark type"""
         return size * self.mark_type.value.glyph_size_factor
-
-    def clear(self, *, property: str = None) -> None:
-        for prop in vars(self).keys():
-            # remove starting underscore to access the property instead of the attribute
-            prop = prop[1:]
-            if property is None or property == prop:
-                getattr(self, prop).clear()
 
     def __str__(self) -> str:
         col = f'{len(self.column_dimensions)}d{len(self.column_measures)}m'
