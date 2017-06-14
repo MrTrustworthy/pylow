@@ -47,27 +47,27 @@ class VizConfig:
         return self._rows
 
     @property
-    def dimensions(self) -> List[Attribute]:
+    def dimensions(self) -> List[Dimension]:
         return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Dimension))
 
     @property
-    def measures(self) -> List[Attribute]:
+    def measures(self) -> List[Measure]:
         return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Measure))
 
     @property
-    def column_dimensions(self) -> List[Attribute]:
+    def column_dimensions(self) -> List[Dimension]:
         return self._find_attrs(self.columns, Dimension)
 
     @property
-    def row_dimensions(self) -> List[Attribute]:
+    def row_dimensions(self) -> List[Dimension]:
         return self._find_attrs(self.rows, Dimension)
 
     @property
-    def column_measures(self) -> List[Attribute]:
+    def column_measures(self) -> List[Measure]:
         return self._find_attrs(self.columns, Measure)
 
     @property
-    def row_measures(self) -> List[Attribute]:
+    def row_measures(self) -> List[Measure]:
         return self._find_attrs(self.rows, Measure)
 
     @property

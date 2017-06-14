@@ -1,17 +1,19 @@
 from functools import reduce
 from itertools import chain
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from .avp import AVP
 from .colorizer import ALL_COLORS, DEFAULT_COLOR, adjust_brightness
-from numpy import number  # noinspection
+from numpy import number
 
 from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
-from pylow.data.attributes import Dimension
+from pylow.data.attributes import Dimension, Measure
 from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.data_preparation.plotinfobuilder import PlotInfoBuilder
 from pylow.utils import reverse_lerp
+
+Number = Union[int, float]
 
 
 class Aggregator:
@@ -42,19 +44,19 @@ class Aggregator:
 
         final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self.config)
 
-        self._add_plot_info_sizes_and_colors(final_data, prepared)
+        self._add_plot_info_sizes_and_colors(final_data)
         self._update_data_attributes(final_data)
 
         self.data = final_data
 
     # TODO FIXME Move to plotinfobuilder, this is so ugly here
     # sizes and colors
-    def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo], raw_data: List[List[AVP]]) -> None:
+    def _add_plot_info_sizes_and_colors(self, data: List[PlotInfo]) -> None:
         for attr in ('size', 'color'):
             if getattr(self.config, attr) is not None:
-                self._add_plot_info_sizes_and_colors_from_conf(data, raw_data, attr)
+                self._add_plot_info_sizes_and_colors_from_conf(data, attr)
 
-    def _add_plot_info_sizes_and_colors_from_conf(self, data: List[PlotInfo], raw_data: List[List[AVP]], attr: str) -> None:
+    def _add_plot_info_sizes_and_colors_from_conf(self, data: List[PlotInfo], attr: str) -> None:
         # find all possible values that are in any plot of the screen
         config_attribute = getattr(self.config, attr)
         val_variation_lists = (plotinfo.variations_of(config_attribute) for plotinfo in data)
@@ -129,7 +131,7 @@ class Aggregator:
             out.append(vals)
         return out
 
-    def _get_prepared_data(self) -> Dict[Tuple[str], Tuple[int]]:
+    def _get_prepared_data(self) -> Dict[Tuple[str], Tuple[Number]]:
         dimensions, measures = self.config.dimensions, self.config.measures
         dimension_names = [d.col_name for d in dimensions]
         grouped_data = self.datasource.data.groupby(dimension_names)
@@ -143,7 +145,7 @@ class Aggregator:
                     out[key_tuple].append(value)
         return out
 
-    def _get_measure_data(self, data, measure) -> Dict[Tuple[str], int]:
+    def _get_measure_data(self, data, measure: Measure) -> Dict[Tuple[str], int]:
         grouped_measure = data[measure.col_name]
         aggregated_data = getattr(grouped_measure, measure.aggregation)()  # is a pandas object
         return aggregated_data.to_dict()

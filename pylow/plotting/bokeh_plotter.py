@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Any, Dict, Tuple
 
 from bokeh.core.properties import field
-from bokeh.io import show
+from bokeh.layouts import Column as BokehColumn
 from bokeh.layouts import gridplot
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
                           ColumnDataSource, FactorRange, Grid,
@@ -213,8 +213,8 @@ class Plotter:
         """
         return HoverTool(tooltips=tooltip, anchor='top_center', renderers=[renderer])
 
-    def display(self) -> None:
+    def get_output(self) -> BokehColumn:
         """ Displays all generated plots in a grid"""
 
         grid = gridplot(self.plots, ncols=self.aggregator.ncols)
-        show(grid)
+        return grid
