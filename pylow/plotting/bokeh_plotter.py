@@ -1,12 +1,12 @@
 from itertools import chain
+from math import pi
 from typing import Any, Dict, Tuple
 
 from bokeh.core.properties import field
 from bokeh.layouts import Column as BokehColumn
 from bokeh.layouts import gridplot
-from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker,
-                          ColumnDataSource, FactorRange, Grid,
-                          HoverTool, LinearAxis, Plot, Range1d)
+from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker, ColumnDataSource, FactorRange, Grid,
+                          LinearAxis, Plot, Range1d)
 from bokeh.models.annotations import Label, Title
 from bokeh.models.axes import Axis
 from bokeh.models.glyphs import Circle, Glyph, VBar
@@ -18,6 +18,7 @@ from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.aggregator import Aggregator
 from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.extensions.flexline import FlexLine
+from pylow.plotting.tooltip_factory import generate_tooltip
 from pylow.utils import unique_list, MarkType
 
 
@@ -59,7 +60,7 @@ class Plotter:
         renderer = plot.add_glyph(source, glyph)
 
         # HOVER
-        hover = self._get_tooltip(renderer, plot_info)
+        hover = generate_tooltip(renderer, plot_info)
         plot.add_tools(hover)
         return plot
 
@@ -185,33 +186,12 @@ class Plotter:
 
         if isinstance(values[0], str):
             ticker = CategoricalTicker()
-            axis = CategoricalAxis(ticker=ticker, major_label_orientation=1.57, **options)
+            axis = CategoricalAxis(ticker=ticker, major_label_orientation=pi / 2, **options)
         else:
             ticker = BasicTicker(num_minor_ticks=0)
             axis = LinearAxis(ticker=ticker, **options)
 
         return ticker, axis
-
-    def _get_tooltip(self, renderer, plot_info: PlotInfo) -> HoverTool:
-        """ Creates and returns the tooltip-template for this plot"""
-
-        # TODO FIXME: Figure out how to approach this, currently basically only a tech demo
-        # TODO FIXME: check if there is a 'level' property
-        x_colname = plot_info.x_coords[0].attr.col_name
-        y_colname = plot_info.y_coords[0].attr.col_name
-
-        additional = set(avp.attr.col_name + ': ' + avp.val for avp in chain(plot_info.x_seps, plot_info.y_seps))
-
-        tooltip = f"""
-        <div>
-            <span style="font-size: 15px;">{x_colname}: @{x_colname}</span><br>
-            <span style="font-size: 15px;">{y_colname}: @{y_colname}</span>
-        </div>
-        <div>
-            <span style="font-size: 10px;">{'<br>'.join(additional)}</span><br>
-        </div>
-        """
-        return HoverTool(tooltips=tooltip, anchor='top_center', renderers=[renderer])
 
     def get_output(self) -> BokehColumn:
         """ Displays all generated plots in a grid"""

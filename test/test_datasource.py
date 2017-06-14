@@ -1,9 +1,7 @@
-import pathlib
 import pytest
-from pylow.data import Datasource
 
-TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
-TEST_FILE = TESTDATA_PATH / 'testdata_min.csv'
+from pylow.data import Datasource
+from .testutils import TEST_FILE
 
 
 def test_datasource_from_file_types():

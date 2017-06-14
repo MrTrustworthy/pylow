@@ -1,18 +1,8 @@
-import os
-import pathlib
-import pytest
-from pylow.data import VizConfig, Datasource
+from pylow.data import VizConfig
 from pylow.data_preparation import Aggregator
 from pylow.plotting import Plotter
 from .config_builder import CONFIG_ROTATE
-from bokeh.io import save
-
-TEMP_FOLDER = pathlib.Path('test/temp')
-
-TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
-TEST_FILE = TESTDATA_PATH / 'testdata.csv'
-# only instantiate once for better performance
-DATASOURCE = Datasource.from_csv(TEST_FILE.absolute())
+from .testutils import DATASOURCE, save_plot_temp
 
 
 @CONFIG_ROTATE
@@ -50,7 +40,5 @@ def test_viz(config, infos):
     plotter = Plotter(DATASOURCE, pc)
     plotter.create_viz()
     grid = plotter.get_output()
-
-    save(grid, TEMP_FOLDER / f"{infos['name']}.html")
-
+    save_plot_temp(grid, infos['name'])
     assert True

@@ -1,11 +1,11 @@
 import pytest
 
-from config_builder import CONF_2d0m_1d1m_colM, CONF_2d0m_1d1m_colD
-from data import VizConfig, Datasource
-from data_preparation import AVP
-from data_preparation.colorizer import adjust_brightness
-from plotting import Plotter
-from test_vizbuilder import TEST_FILE
+from pylow.data import VizConfig, Datasource
+from pylow.data_preparation import AVP
+from pylow.data_preparation.colorizer import adjust_brightness
+from pylow.plotting import Plotter
+from .config_builder import CONF_2d0m_1d1m_colM, CONF_2d0m_1d1m_colD
+from .testutils import TEST_FILE
 
 
 def test_color_lightning():

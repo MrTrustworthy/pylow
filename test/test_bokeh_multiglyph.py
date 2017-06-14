@@ -1,22 +1,18 @@
-import os
-import pathlib
 import string
-import sys
-from time import sleep
 
 import pytest
-from bokeh.io import show
 from bokeh.models import (Circle, ColumnDataSource, CategoricalAxis, FactorRange, LinearAxis, Plot,
                           Range1d)
 
+from .testutils import save_plot_temp
+
 
 def test_flexline():
-
     data = {
         'x1': [string.ascii_letters[i] for i in range(7)],
-        'y1': [i**0.5 for i in range(7)],
+        'y1': [i ** 0.5 for i in range(7)],
         'x2': [string.ascii_letters[i] for i in range(7)],
-        'y2': [i**0.5 + 10 for i in range(7)],
+        'y2': [i ** 0.5 + 10 for i in range(7)],
         'size': [10 + (i * 5) for i in range(7)],
     }
 
@@ -38,7 +34,8 @@ def test_flexline():
 
     plot.add_layout(CategoricalAxis(), 'below')
     plot.add_layout(LinearAxis(), 'left')
-    show(plot)
+    save_plot_temp(plot, 'multiglyph')
+
 
 if __name__ == '__main__':
     pytest.main(['-s', 'test_bokeh_multiglyph.py'])

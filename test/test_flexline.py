@@ -1,11 +1,9 @@
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import pylow  # noqa
-import pytest  # noqa
-from bokeh.io import show
+import pytest
 from bokeh.models import ColumnDataSource, Plot, Range1d, LinearAxis
+
+from pylow.data_preparation import colorizer
+from pylow.extensions.flexline import FlexLine
+from .testutils import save_plot_temp
 
 
 def test_flexline():
@@ -13,12 +11,12 @@ def test_flexline():
         'x': [i for i in range(7)],
         'y': [i ** 0.5 for i in range(7)],
         'size': [10 + (i * 5) for i in range(7)],
-        'colors': [c for c in pylow.colorizer.ALL_COLORS[:7]]
+        'colors': [c for c in colorizer.ALL_COLORS[:7]]
     }
 
     source = ColumnDataSource(data=data)
 
-    glyph = pylow.FlexLine(x='x', y='y', size='size', colors='colors')
+    glyph = FlexLine(x='x', y='y', size='size', colors='colors')
 
     options = {
         'plot_width': 800,
@@ -31,7 +29,7 @@ def test_flexline():
     plot.add_glyph(source, glyph)
     plot.add_layout(LinearAxis(), 'below')
     plot.add_layout(LinearAxis(), 'left')
-    show(plot)
+    save_plot_temp(plot, 'multiglyph')
 
 
 if __name__ == '__main__':
