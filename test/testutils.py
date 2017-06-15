@@ -15,3 +15,7 @@ def save_plot_temp(plot, name):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         save(plot, TEMP_FOLDER / f'{name}.html')
+
+
+def get_plot_temp(name):
+    return TEMP_FOLDER / f'{name}.html'

@@ -1,6 +1,7 @@
+import pytest
+
 from pylow.data.attributes import Dimension, Measure
 from pylow.utils import MarkType
-import pytest
 
 # Format Column<x dimensions, y measures> Rows<x dimensions, y measures>
 CONF_1d0m_0d1m = {
@@ -93,18 +94,23 @@ CONF_2d0m_1d1m_sizeN_colMX_circle = {
 CONFIG_ROTATE = pytest.mark.parametrize("config,infos", [
 
     (CONF_2d0m_1d1m_sizeN_colN_circle,
-        {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': None, 'name': 'CONF_2d0m_1d1m_sizeN_colN_circle'}
+     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': None,
+      'name': 'CONF_2d0m_1d1m_sizeN_colN_circle'}
      ),
     (CONF_2d0m_1d1m_sizeN_colD_circle,
-        {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None, 'name': 'CONF_2d0m_1d1m_sizeN_colD_circle'}
+     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None,
+      'name': 'CONF_2d0m_1d1m_sizeN_colD_circle'}
      ),
     (CONF_2d0m_1d1m_sizeN_colM_circle,
-     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None, 'name': 'CONF_2d0m_1d1m_sizeN_colM_circle'}
+     {'dimensions': 3, 'measures': 1, 'plots': 12, 'color': 1, 'color_sep': None,
+      'name': 'CONF_2d0m_1d1m_sizeN_colM_circle'}
      ),
     (CONF_2d0m_1d1m_sizeN_colDX_circle,
-        {'dimensions': 4, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': 1, 'name': 'CONF_2d0m_1d1m_sizeN_colDX_circle'}
+     {'dimensions': 4, 'measures': 1, 'plots': 12, 'color': None, 'color_sep': 1,
+      'name': 'CONF_2d0m_1d1m_sizeN_colDX_circle'}
      ),
     (CONF_2d0m_1d1m_sizeN_colMX_circle,  # FIXME color looks weird, check it out!
-     {'dimensions': 3, 'measures': 2, 'plots': 12, 'color': 1, 'color_sep': None, 'name': 'CONF_2d0m_1d1m_sizeN_colMX_circle'}
+     {'dimensions': 3, 'measures': 2, 'plots': 12, 'color': 1, 'color_sep': None,
+      'name': 'CONF_2d0m_1d1m_sizeN_colMX_circle'}
      )
 ])
