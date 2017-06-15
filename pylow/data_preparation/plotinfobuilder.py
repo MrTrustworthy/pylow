@@ -1,9 +1,10 @@
 from itertools import chain
 from typing import List
 
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.data.vizconfig import VizConfig
+from pylow.data_preparation.avp import AVP
+from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
+from pylow.data_preparation.plotinfo import PlotInfo
 
 
 class PlotInfoBuilder:
@@ -38,14 +39,15 @@ class PlotInfoBuilder:
         x_seps = [plot_data[find_index(col)] for col in config.previous_columns]
         y_seps = [plot_data[find_index(col)] for col in config.previous_rows]
 
-        color_seps = [plot_data[find_index(config.color_sep)]] if config.color_sep is not None else None
-
+        # gather additional data that is not used for X/Y placement of glyphs (eg. for colors and sizes)
         used_indicies = set(find_index(col) for col in config.rows + config.columns)
         all_indicies = set(range(len(plot_data)))
         additional_data_indicies = all_indicies - used_indicies
         additional_data = [plot_data[i] for i in additional_data_indicies]
 
-        cls._create_new_or_update(x_coords, y_coords, x_seps, y_seps, color_seps, additional_data)
+        col_behaviour = ColorizationBehaviour.get_correct_behaviour(config)
+
+        cls._create_new_or_update(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour)
 
     @classmethod
     def _create_new_or_update(
@@ -54,13 +56,13 @@ class PlotInfoBuilder:
             y_coords: List[AVP],
             x_seps: List[AVP],
             y_seps: List[AVP],
-            color_seps: List[AVP],
-            additional_data: List[AVP]
+            additional_data: List[AVP],
+            col_behaviour: ColorizationBehaviour
     ) -> None:
         """ Creates a new PlotInfo object or, if one already exists for those plot separators, extends it"""
 
         # create new object and determine of there are already fitting existing objects
-        new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, color_seps, additional_data)
+        new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour)
         existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), cls._plotinfo_cache))
 
         if len(existing_plotinfos) == 0:
@@ -72,8 +74,6 @@ class PlotInfoBuilder:
             existing.x_coords.extend(x_coords)
             existing.y_coords.extend(y_coords)
             existing.additional_data.extend(additional_data)
-            if color_seps is not None:
-                existing.color_seps.extend(color_seps)
 
         else:
             # There should never be more than 1 existing object

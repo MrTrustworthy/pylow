@@ -1,5 +1,6 @@
-from typing import List, Tuple, Generator, Union
 from itertools import cycle
+from typing import List, Tuple, Generator, Union
+
 from .avp import AVP
 
 Number = Union[int, float]
@@ -23,9 +24,9 @@ def adjust_brightness(color: str, amount: float) -> str:
     # -1 == black, 0 == equal, 1 == white
 
     r, g, b = to_rgb(color)
-    r = to_valid_rgb(r + (r * amount))
-    g = to_valid_rgb(g + (g * amount))
-    b = to_valid_rgb(b + (b * amount))
+    r = to_valid_rgb_range(r + (r * amount))
+    g = to_valid_rgb_range(g + (g * amount))
+    b = to_valid_rgb_range(b + (b * amount))
     return to_hex(r, g, b)
 
 
@@ -38,7 +39,7 @@ def to_rgb(color: str) -> Tuple[int, int, int]:
     return int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
 
 
-def to_valid_rgb(color: Number) -> int:
+def to_valid_rgb_range(color: Number) -> int:
     return int(max(min(color, 255), 0))
 
 

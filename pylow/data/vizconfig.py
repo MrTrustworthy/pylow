@@ -14,7 +14,7 @@ class VizConfig:
         self._columns = []  # type: List[Attribute]
         self._rows = []  # type: List[Attribute]
         self.color = None  # type: Attribute
-        self.color_sep = None  # type: Attribute
+        # self.color_sep = None  # type: Attribute
         self.size = None  # type: Attribute
         self.mark_type = None  # type: MarkType
 
@@ -24,11 +24,12 @@ class VizConfig:
         vc.columns.extend(_dict['columns'])
         vc.rows.extend(_dict['rows'])
 
-        color = _dict.get('color', None)
-        if color in vc.columns_and_rows or isinstance(color, Measure):
-            vc.color = color
-        else:
-            vc.color_sep = color
+        vc.color = _dict.get('color', None)
+
+        # if color in vc.columns_and_rows or isinstance(color, Measure):
+        #     vc.color = color
+        # else:
+        #     vc.color_sep = color
 
         vc.size = _dict.get('size', None)
         vc.mark_type = _dict.get('mark_type', MarkType.CIRCLE)
@@ -48,11 +49,11 @@ class VizConfig:
 
     @property
     def dimensions(self) -> List[Dimension]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Dimension))
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color]), Dimension))
 
     @property
     def measures(self) -> List[Measure]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.color_sep]), Measure))
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color]), Measure))
 
     @property
     def column_dimensions(self) -> List[Dimension]:
@@ -97,9 +98,12 @@ class VizConfig:
         """Map a 'generic size value' to the concrete size for a given glyph/mark type"""
         return size * self.mark_type.value.glyph_size_factor
 
+    def __repr__(self) -> str:
+        return str(self)
+
     def __str__(self) -> str:
         col = f'{len(self.column_dimensions)}d{len(self.column_measures)}m'
         row = f'{len(self.row_dimensions)}d{len(self.row_measures)}m'
         size = f'size{type(self.size).__name__[0]}'
-        color = f'size{type(self.color).__name__[0]}'
+        color = f'col{type(self.color).__name__[0]}'
         return '_'.join(['CONF', col, row, size, color])
