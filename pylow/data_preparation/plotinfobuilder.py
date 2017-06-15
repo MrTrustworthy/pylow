@@ -8,29 +8,26 @@ from pylow.data_preparation.plotinfo import PlotInfo
 
 
 class PlotInfoBuilder:
-    _plotinfo_cache = []
-
     @classmethod
     def create_all_plotinfos(cls, data: List[List[AVP]], config: VizConfig):
         """ The single public interface of PlotInfoBuilder
 
         Will take a list of AVP-Lists and create a list of PlotInfo objects from them
         """
-        for dataset in data:
-            cls._make_plot_info(dataset, config)
+        plotinfo_cache = []
 
-        output = cls._plotinfo_cache[:]
-        cls._plotinfo_cache.clear()
+        for dataset in data:
+            cls._make_plot_info(dataset, config, plotinfo_cache)
 
         # sort data so that dimensions and measures stay grouped
-        output.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
-        return output
+        plotinfo_cache.sort(key=lambda x: [avp.val for avp in chain(x.y_seps[::-1], x.x_seps[::-1])])
+        return plotinfo_cache
 
     @classmethod
-    def _make_plot_info(cls, plot_data: List[AVP], config: VizConfig) -> None:
+    def _make_plot_info(cls, plot_data: List[AVP], config: VizConfig, plotinfo_cache: List[PlotInfo]) -> None:
         """ Gathers the data necessary for a single PlotInfo object and creates it
 
-        Will not return an object but rather put it into the _plotinfo_cache
+        Will not return an object but rather put it into the plotinfo_cache
         """
         find_index = config.all_attrs.index
 
@@ -45,29 +42,15 @@ class PlotInfoBuilder:
         additional_data_indicies = all_indicies - used_indicies
         additional_data = [plot_data[i] for i in additional_data_indicies]
 
-        col_behaviour = ColorizationBehaviour.get_correct_behaviour(config)
-
-        cls._create_new_or_update(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour)
-
-    @classmethod
-    def _create_new_or_update(
-            cls,
-            x_coords: List[AVP],
-            y_coords: List[AVP],
-            x_seps: List[AVP],
-            y_seps: List[AVP],
-            additional_data: List[AVP],
-            col_behaviour: ColorizationBehaviour
-    ) -> None:
-        """ Creates a new PlotInfo object or, if one already exists for those plot separators, extends it"""
+        col_behaviour = ColorizationBehaviour.get_correct_behaviour(config, plotinfo_cache)
 
         # create new object and determine of there are already fitting existing objects
         new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour)
-        existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), cls._plotinfo_cache))
+        existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), plotinfo_cache))
 
         if len(existing_plotinfos) == 0:
             # use the new object
-            cls._plotinfo_cache.append(new_plotinfo)
+            plotinfo_cache.append(new_plotinfo)
         elif len(existing_plotinfos) == 1:
             # use an existing object and discard the newly created one
             existing = existing_plotinfos[0]

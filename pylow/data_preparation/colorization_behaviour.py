@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import List, Any
 
 from pylow.data.attributes import Measure, Dimension
@@ -11,11 +12,13 @@ class ColorizationBehaviour:
     """ Base class for Colorization Behaviour, not useful to instantiate.
     """
 
-    def __init__(self, vizconfig: 'VizConfig') -> None:
+    def __init__(self, vizconfig: 'VizConfig', all_plotinfos: List['PlotInfo']) -> None:
         self.vizconfig = vizconfig
+        # needed in order to find the min/max ranges for measures and provide consistent colors for dimensions
+        self.all_plotinfos = all_plotinfos
 
     @staticmethod
-    def get_correct_behaviour(vizconfig: 'VizConfig') -> 'ColorizationBehaviour':
+    def get_correct_behaviour(vizconfig: 'VizConfig', all_plotinfos: List['PlotInfo']) -> 'ColorizationBehaviour':
         """ Dynamic dispatch behvaiour getter
 
         This is an implementation of the strategy pattern to encapsulate different types of colorization
@@ -25,17 +28,21 @@ class ColorizationBehaviour:
 
         color = vizconfig.color
         if color is None:
-            return NoColorColorizationBehaviour(vizconfig)
+            return NoColorColorizationBehaviour(vizconfig, all_plotinfos)
 
+        # there are two colorization behaviours for dimensions:
+        # if color is an already existing dimension, it will work straight forward and color every glyph
+        # if color is a new dimension, the aggregation will additionally split the data into (much) more glyphs
         elif isinstance(color, Dimension):
             if color in vizconfig.columns_and_rows:
-                return ExistingDimensionColorizationBehaviour(vizconfig)
+                return ExistingDimensionColorizationBehaviour(vizconfig, all_plotinfos)
             else:
-                return NewDimensionColorizationBehaviour(vizconfig)
+                return NewDimensionColorizationBehaviour(vizconfig, all_plotinfos)
 
         # for measures, it makes no difference whether it's a new or existing attribute
+        # colorization is based on the min-max range then
         elif isinstance(color, Measure):
-            return MeasureColorizationBehaviour(vizconfig)
+            return MeasureColorizationBehaviour(vizconfig, all_plotinfos)
 
         else:
             assert False
@@ -58,10 +65,12 @@ class ExistingDimensionColorizationBehaviour(ColorizationBehaviour):
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Find all possible values that are in any plot of the screen
         """
-        # TODO FIXME currently only finds the possible values in THIS plot!
+
         conf_color = self.vizconfig.color
-        possible_vals = sorted(set(plot_info.variations_of(conf_color)))
+        variations = [pi.variations_of(conf_color) for pi in self.all_plotinfos]
+        possible_vals = sorted(set(chain(*variations)))
         attribute_vals = [avp.val for avp in plot_info.find_attributes(conf_color)]
+
         # create a avp with (Attribute, hex_of_color) for each value
         avps = [AVP(conf_color, ALL_COLORS[possible_vals.index(curr_val)]) for curr_val in attribute_vals]
         return avps
@@ -79,10 +88,9 @@ class MeasureColorizationBehaviour(ColorizationBehaviour):
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Find all possible values that are in any plot of the screen
         """
-        # TODO FIXME currently only finds the possible values in THIS plot! need to compare with all other plots
         conf_color = self.vizconfig.color
-        val_variation_lists = plot_info.variations_of(conf_color)
-        possible_vals = sorted(set(val_variation_lists))
+        variations = [pi.variations_of(conf_color) for pi in self.all_plotinfos]
+        possible_vals = sorted(set(chain(*variations)))
         attribute_vals = [avp.val for avp in plot_info.find_attributes(conf_color)]
         # create a avp with (Attribute, hex_of_color) for each value
         avps = [self._get_color_data(curr_val, possible_vals) for curr_val in attribute_vals]
