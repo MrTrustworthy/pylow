@@ -35,8 +35,8 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
     row_dim_combs = [[Dimension('Ship Mode')]]
     col_measure_combs = [[]]
     row_measure_combs = [[Measure('Quantity')]]
-    colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
-    sizes = [None]  # , Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
+    colors = [None]  # , Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
+    sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
     marks = [MarkType.CIRCLE]
 
     # generate permutations

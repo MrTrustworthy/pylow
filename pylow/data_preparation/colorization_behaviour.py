@@ -89,6 +89,7 @@ class NewDimensionColorizationBehaviour(ColorizationBehaviour):
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         color_data = plot_info.additional_data
         # TODO FIXME: This is ALL extra data, need to handle cases where more of those appear
+        # TODO FIXME: Need to consider ALL data in ALL plots here
         assert len(color_data) == len(plot_info.x_coords)
         return list(self.get_colors_for_color_separators(color_data))
 

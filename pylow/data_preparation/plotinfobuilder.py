@@ -5,6 +5,7 @@ from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
 from pylow.data_preparation.plotinfo import PlotInfo
+from pylow.data_preparation.sizing_behaviour import SizingBehaviour
 
 
 class PlotInfoBuilder:
@@ -43,9 +44,9 @@ class PlotInfoBuilder:
         additional_data = [plot_data[i] for i in additional_data_indicies]
 
         col_behaviour = ColorizationBehaviour.get_correct_behaviour(config, plotinfo_cache)
-
+        size_behaviour = SizingBehaviour.get_correct_behaviour(config, plotinfo_cache)
         # create new object and determine of there are already fitting existing objects
-        new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour)
+        new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour, size_behaviour)
         existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), plotinfo_cache))
 
         if len(existing_plotinfos) == 0:

@@ -1,9 +1,11 @@
 from itertools import chain
 from typing import Dict, List, Tuple, Any, Union
 
+from data import VizConfig
 from pylow.data.attributes import Attribute
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
+from pylow.data_preparation.sizing_behaviour import SizingBehaviour
 
 
 class PlotInfo:
@@ -14,7 +16,8 @@ class PlotInfo:
             x_seps: List[AVP],
             y_seps: List[AVP],
             additional_data: List[AVP],
-            colorization_behaviour: ColorizationBehaviour
+            colorization_behaviour: ColorizationBehaviour,
+            sizing_behaviour: SizingBehaviour
     ):
         assert len(x_coords) == len(y_coords)
         self.x_coords = x_coords
@@ -23,6 +26,7 @@ class PlotInfo:
         self.y_seps = y_seps
         self.additional_data = additional_data
         self.colorization_behaviour = colorization_behaviour
+        self.sizing_behaviour = sizing_behaviour
 
         self._sizes = None  # will be drawn from property
 
@@ -32,12 +36,7 @@ class PlotInfo:
 
     @property
     def sizes(self) -> List[AVP]:
-        return self._sizes if self._sizes is not None else [AVP(None, 1)] * len(self.x_coords)
-
-    @sizes.setter
-    def sizes(self, val) -> None:
-        assert val is None or len(val) == len(self.x_coords)
-        self._sizes = val
+        return self.sizing_behaviour.get_sizes(self)
 
     def find_attributes(self, attribute: Attribute) -> List[AVP]:
         all_attributes = chain(self.x_coords, self.y_coords, self.x_seps, self.y_seps, self.additional_data)
