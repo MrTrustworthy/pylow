@@ -2,7 +2,6 @@ import json
 
 from bs4 import BeautifulSoup
 
-from pylow.data import VizConfig
 from pylow.data_preparation.aggregator import Aggregator
 from pylow.plotting import Plotter
 from .config_builder import CONFIG_ROTATE
@@ -10,47 +9,24 @@ from .testutils import DATASOURCE, save_plot_temp, get_plot_temp
 
 
 @CONFIG_ROTATE
-def test_config_builder(config, infos):
-    pc = VizConfig.from_dict(config)
-    assert len(pc.dimensions) == infos['dimensions']
-    assert len(pc.measures) == infos['measures']
-
-    # TODO FIXME this is deprecated, check colors
-    # color and color sep are mutually exclusive
-    # assert pc.color is None or pc.color_sep is None
-    #
-    # if infos['color'] is None:
-    #     assert pc.color is None
-    # else:
-    #     assert pc.color is not None
-    #
-    # if infos['color_sep'] is None:
-    #     assert pc.color_sep is None
-    # else:
-    #     assert pc.color_sep is not None
-
-
-@CONFIG_ROTATE
-def test_aggregator(config, infos):
-    pc = VizConfig.from_dict(config)
-    aggregator = Aggregator(DATASOURCE, pc)
+def test_aggregator(viz_config, infos):
+    aggregator = Aggregator(DATASOURCE, viz_config)
     aggregator.update_data()
-    assert len(aggregator.data) == infos['plots']
-    assert aggregator.ncols * aggregator.nrows == infos['plots']
+    assert len(aggregator.data) == infos['plot_amount']
+    assert aggregator.ncols * aggregator.nrows == infos['plot_amount']
 
 
 @CONFIG_ROTATE
-def test_viz(config, infos):
-    pc = VizConfig.from_dict(config)
-    plotter = Plotter(DATASOURCE, pc)
+def test_viz(viz_config, infos):
+    plotter = Plotter(DATASOURCE, viz_config)
     plotter.create_viz()
     grid = plotter.get_output()
-    save_plot_temp(grid, infos['name'])
-    check_html(infos)
+    save_plot_temp(grid, str(viz_config))
+    check_html(viz_config, infos)
 
 
-def check_html(infos):
-    file_name = get_plot_temp(infos['name'])
+def check_html(viz_config, infos):
+    file_name = get_plot_temp(str(viz_config))
     json_plot = extract_plot_structure(file_name)
     assert json_plot is not None
     roots_title_version = json_plot[list(json_plot.keys())[0]]
@@ -62,14 +38,14 @@ def check_html(infos):
     plots = [ref for ref in references if ref['type'] == 'Plot']
     glyphs = [ref for ref in references if ref['type'] == 'Circle']  # FIXME dynamic glyph selection
     renderers = [ref for ref in references if ref['type'] == 'GlyphRenderer']
-    assert len(plots) == len(renderers) == len(glyphs) == infos['plots']
+    assert len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']
 
     column_datasources = [ref for ref in references if ref['type'] == 'ColumnDataSource']
     data = [ref['attributes']['data'] for ref in column_datasources]
 
     # check for colors
     all_colors = sum([d['_color'] for d in data], [])
-    if 'colN' in infos['name']:
+    if 'colN' in str(viz_config):
         assert len(set(all_colors)) == 1
     else:
         assert len(set(all_colors)) > 1

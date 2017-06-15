@@ -23,13 +23,7 @@ class VizConfig:
         vc = cls()
         vc.columns.extend(_dict['columns'])
         vc.rows.extend(_dict['rows'])
-
         vc.color = _dict.get('color', None)
-
-        # if color in vc.columns_and_rows or isinstance(color, Measure):
-        #     vc.color = color
-        # else:
-        #     vc.color_sep = color
 
         vc.size = _dict.get('size', None)
         vc.mark_type = _dict.get('mark_type', MarkType.CIRCLE)
@@ -104,6 +98,7 @@ class VizConfig:
     def __str__(self) -> str:
         col = f'{len(self.column_dimensions)}d{len(self.column_measures)}m'
         row = f'{len(self.row_dimensions)}d{len(self.row_measures)}m'
-        size = f'size{type(self.size).__name__[0]}'
-        color = f'col{type(self.color).__name__[0]}'
-        return '_'.join(['CONF', col, row, size, color])
+        size = f'size{type(self.size).__name__[0].upper()}{"X" if self.size not in self.columns_and_rows else ""}'
+        color = f'col{type(self.color).__name__[0].upper()}{"X" if self.color not in self.columns_and_rows else ""}'
+        mark = self.mark_type.value.glyph_name.lower()
+        return '_'.join(['CONF', col, row, size, color, mark])

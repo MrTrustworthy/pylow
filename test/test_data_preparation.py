@@ -1,10 +1,10 @@
 import pytest
 
 from pylow.data import VizConfig, Datasource
+from pylow.data.attributes import Dimension, Measure
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorizer import adjust_brightness
 from pylow.plotting import Plotter
-from .config_builder import CONF_2d0m_1d1m_colM, CONF_2d0m_1d1m_colD
 from .testutils import TEST_FILE
 
 
@@ -18,6 +18,11 @@ def test_color_lightning():
 
 
 def test_output_coloring_measures():
+    CONF_2d0m_1d1m_colM = {
+        'columns': [Dimension('Category'), Dimension('Region')],
+        'rows': [Dimension('Ship Mode'), Measure('Quantity')],
+        'color': Measure('Quantity')
+    }
     pc = VizConfig.from_dict(CONF_2d0m_1d1m_colM)
     ds = Datasource.from_csv(TEST_FILE.absolute())
     plotter = Plotter(ds, pc)
@@ -35,6 +40,11 @@ def test_output_coloring_measures():
 
 
 def test_output_coloring_dimensions():
+    CONF_2d0m_1d1m_colD = {
+        'columns': [Dimension('Category'), Dimension('Region')],
+        'rows': [Dimension('Ship Mode'), Measure('Quantity')],
+        'color': Dimension('Region')
+    }
     pc = VizConfig.from_dict(CONF_2d0m_1d1m_colD)
     ds = Datasource.from_csv(TEST_FILE.absolute())
     plotter = Plotter(ds, pc)
@@ -56,6 +66,11 @@ def test_output_coloring_dimensions():
 
 
 def test_output_ordering():
+    CONF_2d0m_1d1m_colD = {
+        'columns': [Dimension('Category'), Dimension('Region')],
+        'rows': [Dimension('Ship Mode'), Measure('Quantity')],
+        'color': Dimension('Region')
+    }
     pc = VizConfig.from_dict(CONF_2d0m_1d1m_colD)
     ds = Datasource.from_csv(TEST_FILE.absolute())
     plotter = Plotter(ds, pc)
