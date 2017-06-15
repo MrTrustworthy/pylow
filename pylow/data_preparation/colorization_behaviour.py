@@ -1,10 +1,9 @@
-from itertools import chain
-from typing import List, Any
+from itertools import chain, cycle
+from typing import List, Any, Generator
 
 from pylow.data.attributes import Measure, Dimension
 from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.colorizer import DEFAULT_COLOR, ALL_COLORS, adjust_brightness, \
-    get_colors_for_color_separators
+from pylow.data_preparation.colorizer import DEFAULT_COLOR, ALL_COLORS, adjust_brightness
 from pylow.utils import reverse_lerp
 
 
@@ -19,7 +18,7 @@ class ColorizationBehaviour:
 
     @staticmethod
     def get_correct_behaviour(vizconfig: 'VizConfig', all_plotinfos: List['PlotInfo']) -> 'ColorizationBehaviour':
-        """ Dynamic dispatch behvaiour getter
+        """ Basically a dynamic dispatch behvaiour getter
 
         This is an implementation of the strategy pattern to encapsulate different types of colorization
         behaviour. Depending on the type of color (dimension, measure; in plot, not in plot; not existing)
@@ -48,6 +47,8 @@ class ColorizationBehaviour:
             assert False
 
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
+        """ Will raise NotImplementedError to remind you to overwrite it in subclasses
+        """
         raise NotImplementedError('get_colors() is only available in subclasses of ColorizationBehaviour')
 
 
@@ -62,10 +63,13 @@ class NoColorColorizationBehaviour(ColorizationBehaviour):
 
 
 class ExistingDimensionColorizationBehaviour(ColorizationBehaviour):
+    """ If the color is an already existing dimension, it will work straight forward and color every glyph
+    """
+
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Find all possible values that are in any plot of the screen
         """
-
+        # find the variations of the dimensions value
         conf_color = self.vizconfig.color
         variations = [pi.variations_of(conf_color) for pi in self.all_plotinfos]
         possible_vals = sorted(set(chain(*variations)))
@@ -77,14 +81,31 @@ class ExistingDimensionColorizationBehaviour(ColorizationBehaviour):
 
 
 class NewDimensionColorizationBehaviour(ColorizationBehaviour):
+    """ If the color is a new dimension, the aggregation will additionally split the data into (much) more glyphs
+
+    This strategy class will deal wit hthose cases
+    """
+
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         color_data = plot_info.additional_data
         # TODO FIXME: This is ALL extra data, need to handle cases where more of those appear
         assert len(color_data) == len(plot_info.x_coords)
-        return list(get_colors_for_color_separators(color_data))
+        return list(self.get_colors_for_color_separators(color_data))
+
+    @staticmethod
+    def get_colors_for_color_separators(col_seps: List['AVP']) -> Generator[AVP, None, None]:
+        all_values = set(avp.val for avp in col_seps)
+        val_to_color = dict(zip(all_values, cycle(ALL_COLORS)))
+        for avp in col_seps:
+            yield AVP(avp.attr, val_to_color[avp.val])
 
 
 class MeasureColorizationBehaviour(ColorizationBehaviour):
+    """ For measures, colorization is based on min-max lerping of a color
+
+    In those cases, it doesn't make a difference if the measure is already somewhere else on the plot.
+    """
+
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Find all possible values that are in any plot of the screen
         """

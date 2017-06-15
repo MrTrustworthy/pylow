@@ -1,7 +1,4 @@
-from itertools import cycle
-from typing import List, Tuple, Generator, Union
-
-from .avp import AVP
+from typing import Tuple, Union
 
 Number = Union[int, float]
 
@@ -43,8 +40,3 @@ def to_valid_rgb_range(color: Number) -> int:
     return int(max(min(color, 255), 0))
 
 
-def get_colors_for_color_separators(col_seps: List['AVP']) -> Generator[AVP, None, None]:
-    all_values = set(avp.val for avp in col_seps)
-    val_to_color = dict(zip(all_values, cycle(ALL_COLORS)))
-    for avp in col_seps:
-        yield AVP(avp.attr, val_to_color[avp.val])
