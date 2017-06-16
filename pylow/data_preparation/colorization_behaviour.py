@@ -87,9 +87,9 @@ class NewDimensionColorizationBehaviour(ColorizationBehaviour):
     """
 
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
-        color_data = plot_info.additional_data
-        # TODO FIXME: This is ALL extra data, need to handle cases where more of those appear
+        color_data = plot_info.find_attributes(self.vizconfig.color)
         # TODO FIXME: Need to consider ALL data in ALL plots here
+        # TODO FIXME: Do we need sorting here to ensure dimensions are colored the same?
         assert len(color_data) == len(plot_info.x_coords)
         return list(self.get_colors_for_color_separators(color_data))
 
