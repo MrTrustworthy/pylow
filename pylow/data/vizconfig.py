@@ -50,27 +50,27 @@ class VizConfig:
 
     @property
     def dimensions(self) -> List[Dimension]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Dimension))
+        return unique_list(self.find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Dimension))
 
     @property
     def measures(self) -> List[Measure]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Measure))
+        return unique_list(self.find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Measure))
 
     @property
     def column_dimensions(self) -> List[Dimension]:
-        return self._find_attrs(self.columns, Dimension)
+        return self.find_attrs(self.columns, Dimension)
 
     @property
     def row_dimensions(self) -> List[Dimension]:
-        return self._find_attrs(self.rows, Dimension)
+        return self.find_attrs(self.rows, Dimension)
 
     @property
     def column_measures(self) -> List[Measure]:
-        return self._find_attrs(self.columns, Measure)
+        return self.find_attrs(self.columns, Measure)
 
     @property
     def row_measures(self) -> List[Measure]:
-        return self._find_attrs(self.rows, Measure)
+        return self.find_attrs(self.rows, Measure)
 
     @property
     def all_attrs(self):
@@ -93,7 +93,7 @@ class VizConfig:
         return self.rows[-1]
 
     @staticmethod
-    def _find_attrs(iterable: List[Attribute], attr_class: AttributeSubclass) -> List[AttributeSubclass]:
+    def find_attrs(iterable: List[Attribute], attr_class: AttributeSubclass) -> List[AttributeSubclass]:
         return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
 
     def __repr__(self) -> str:

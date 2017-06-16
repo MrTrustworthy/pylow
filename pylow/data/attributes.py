@@ -11,6 +11,9 @@ class Attribute:
     def __eq__(self, other: 'Attribute') -> bool:
         return type(self).__name__ == type(other).__name__ and self.col_name == other.col_name
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
 
 class Dimension(Attribute):
     def __init__(self, col_name: str) -> None:

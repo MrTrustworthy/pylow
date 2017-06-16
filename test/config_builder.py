@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from functools import reduce
 from itertools import product
 from typing import Generator, List, Tuple
 
@@ -8,23 +9,54 @@ import pytest
 from pylow.data.attributes import Dimension, Measure, Attribute
 from pylow.data.vizconfig import VizConfig
 from pylow.utils import MarkType
+from .testutils import DATASOURCE
 
 
 def get_configs(filtering=None):
-    all_configs = build_configs()
+    all_configs = _build_configs()
     if filtering is not None:
         all_configs = filter(lambda vc: re.search(filtering, str(vc[0])), all_configs)
 
     return all_configs
 
 
-def build_configs() -> Generator[VizConfig, None, None]:
+def _build_configs() -> Generator[VizConfig, None, None]:
     """ Dynamically create a set of VizConfig's for testing
     """
     for conf_dict in _build_config_dicts():
         # TODO add automatic calculating of the plot amount by generating a datasource
-        info = {'plot_amount': 12}
-        yield VizConfig.from_dict(conf_dict), info
+        info = {}
+        vizconfig = VizConfig.from_dict(conf_dict)
+        info['plot_amount'] = _determine_plot_amount(vizconfig)
+        info['glyphs_in_plot_amount'] = _determine_glyphs_in_plot_amount(vizconfig)
+        yield vizconfig, info
+
+
+def _determine_glyphs_in_plot_amount(vizconfig: VizConfig) -> int:
+    """ Determine how many glyphs will be in a single plot
+
+    Works by multiplying the length of all not-last-in-plot dimensions in columns and rows
+    """
+    color = vizconfig.color if vizconfig.color not in vizconfig.columns_and_rows else None
+    size = vizconfig.size if vizconfig.size not in vizconfig.columns_and_rows else None
+
+    relevant_attributes = {vizconfig.last_column, vizconfig.last_row, color, size}
+    relevant_dimensions = VizConfig.find_attrs(relevant_attributes, Dimension)
+    variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
+    glyph_amount = reduce(lambda old, new: old * new, map(len, variations), 1)
+    return glyph_amount
+
+
+def _determine_plot_amount(vizconfig: VizConfig) -> int:
+    """ Determine how many single plots there will be in a visualization
+
+    Works by multiplying the length of all not-last-in-plot dimensions in columns and rows
+    """
+    relevant_attributes = vizconfig.previous_columns + vizconfig.previous_rows
+    relevant_dimensions = VizConfig.find_attrs(relevant_attributes, Dimension)
+    variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
+    plot_amount = reduce(lambda old, new: old * new, map(len, variations), 1)
+    return plot_amount
 
 
 def _build_config_dicts() -> Generator[dict, None, None]:
@@ -45,7 +77,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
     col_measure_combs = [[]]
     row_measure_combs = [[Measure('Quantity')]]
     colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
-    sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
+    sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('Segment'), Measure('Profit')]
     marks = [MarkType.CIRCLE]
 
     # generate permutations

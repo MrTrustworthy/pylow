@@ -12,12 +12,11 @@ from .testutils import DATASOURCE, save_plot_temp, get_plot_temp
 def test_aggregator(viz_config, infos):
     aggregator = Aggregator(DATASOURCE, viz_config)
     aggregator.update_data()
-    assert len(aggregator.data) == infos['plot_amount']
-    assert aggregator.ncols * aggregator.nrows == infos['plot_amount']
+    assert len(aggregator.data) == aggregator.ncols * aggregator.nrows == infos['plot_amount']
 
 
 @CONFIG_ROTATE
-def test_viz(viz_config, infos):
+def test_viz(viz_config, infos) -> None:
     plotter = Plotter(DATASOURCE, viz_config)
     plotter.create_viz()
     grid = plotter.get_output()
@@ -25,10 +24,13 @@ def test_viz(viz_config, infos):
     check_html(viz_config, infos)
 
 
-def check_html(viz_config, infos):
+def check_html(viz_config, infos) -> None:
     file_name = get_plot_temp(str(viz_config))
     json_plot = extract_plot_structure(file_name)
+
     assert json_plot is not None
+
+    # parse the json plot
     roots_title_version = json_plot[list(json_plot.keys())[0]]
     roots = roots_title_version['roots']
     references = roots['references']  # type: list
@@ -41,7 +43,7 @@ def check_html(viz_config, infos):
     assert len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']
 
     column_datasources = [ref for ref in references if ref['type'] == 'ColumnDataSource']
-    data = [ref['attributes']['data'] for ref in column_datasources]
+    data = [ref['attributes']['data'] for ref in column_datasources]  # type: List[Dict[str, int]]
 
     # check for colors
     all_colors = sum([d['_color'] for d in data], [])
@@ -49,6 +51,19 @@ def check_html(viz_config, infos):
         assert len(set(all_colors)) == 1
     else:
         assert len(set(all_colors)) > 1
+
+    # check for sizes
+    all_sizes = sum([d['_size'] for d in data], [])
+    if 'sizeN' in str(viz_config):
+        assert len(set(all_sizes)) == 1
+    else:
+        assert len(set(all_sizes)) > 1
+
+    # check for glyph amounts
+    colname = viz_config.last_column.col_name
+    glyph_amounts = [len(d[colname]) for d in data]
+    # since not all plots will contain all dimension values, the glyph amount can be less than the max amount
+    assert max(glyph_amounts) <= infos['glyphs_in_plot_amount']
 
 
 def extract_plot_structure(file_name: str) -> dict:

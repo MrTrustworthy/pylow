@@ -1,4 +1,3 @@
-
 from typing import Callable, Optional, Union
 
 import pandas
@@ -7,7 +6,6 @@ from .attributes import Attribute
 
 
 class Datasource:
-
     def __init__(self, data: pandas.DataFrame) -> None:
         self.data = data
         self._add_noc()
@@ -29,14 +27,12 @@ class Datasource:
                 except ValueError:
                     pass
 
-
-
     def get_variations_of(self, column: Union[str, Attribute]):
         col = getattr(column, 'col_name', column)
         return list(set(self.data[col]))
 
     @classmethod
-    def from_csv(cls, filename: str, options: Optional[dict]=None) -> 'Datasource':
+    def from_csv(cls, filename: str, options: Optional[dict] = None) -> 'Datasource':
         if options is None:
             options = options = {
                 'delimiter': ';',
@@ -47,6 +43,7 @@ class Datasource:
         ds = cls(data)
         ds._guess_types()
         return ds
+
 
 if __name__ == '__main__':
     ds = Datasource.from_csv('SalesJan2009.csv')
