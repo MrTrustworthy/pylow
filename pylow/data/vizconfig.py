@@ -1,32 +1,39 @@
 from itertools import chain
-from typing import List, Union
+from typing import List, Union, TypeVar, Optional
 
 from pylow.utils import unique_list, MarkType
 from .attributes import Attribute, Dimension, Measure
 
 Number = Union[int, float]
+AttributeSubclass = TypeVar('AttributeSubclass', Dimension, Measure)
 
 
 class VizConfig:
-    def __init__(self) -> None:
-
+    def __init__(
+            self,
+            columns: List[Attribute],
+            rows: List[Attribute],
+            color: Optional[Attribute],
+            size: Optional[Attribute],
+            mark_type: MarkType
+    ) -> None:
         # non-writeable properties to ensure lists don't get switched out
-        self._columns = []  # type: List[Attribute]
-        self._rows = []  # type: List[Attribute]
-        self.color = None  # type: Attribute
-        # self.color_sep = None  # type: Attribute
-        self.size = None  # type: Attribute
-        self.mark_type = None  # type: MarkType
+        self._columns = columns  # type: List[Attribute]
+        self._rows = rows  # type: List[Attribute]
+        self.color = color  # type: Optional[Attribute]
+        self.size = size  # type: Optional[Attribute]
+        self.mark_type = mark_type  # type: MarkType
 
     @classmethod
     def from_dict(cls, _dict: dict) -> 'VizConfig':
-        vc = cls()
-        vc.columns.extend(_dict['columns'])
-        vc.rows.extend(_dict['rows'])
-        vc.color = _dict.get('color', None)
+        columns = _dict.get('columns', [])
+        rows = _dict.get('rows', [])
+        color = _dict.get('color', None)
+        size = _dict.get('size', None)
+        mark_type = _dict.get('mark_type', MarkType.CIRCLE)
 
-        vc.size = _dict.get('size', None)
-        vc.mark_type = _dict.get('mark_type', MarkType.CIRCLE)
+        vc = cls(columns, rows, color, size, mark_type)
+
         return vc
 
     @property
@@ -43,11 +50,11 @@ class VizConfig:
 
     @property
     def dimensions(self) -> List[Dimension]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color]), Dimension))
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Dimension))
 
     @property
     def measures(self) -> List[Measure]:
-        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color]), Measure))
+        return unique_list(self._find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Measure))
 
     @property
     def column_dimensions(self) -> List[Dimension]:
@@ -85,12 +92,9 @@ class VizConfig:
     def last_row(self):
         return self.rows[-1]
 
-    def _find_attrs(self, iterable: List[Attribute], attr_class: Attribute):
+    @staticmethod
+    def _find_attrs(iterable: List[Attribute], attr_class: AttributeSubclass) -> List[AttributeSubclass]:
         return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
-
-    def get_glyph_size(self, size: Number) -> Number:
-        """Map a 'generic size value' to the concrete size for a given glyph/mark type"""
-        return size * self.mark_type.value.glyph_size_factor
 
     def __repr__(self) -> str:
         return str(self)

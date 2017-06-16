@@ -61,7 +61,7 @@ class PlotInfo:
             x_colname: [avp.val for avp in self.x_coords],
             y_colname: [avp.val for avp in self.y_coords],
             color_colname: [avp.val for avp in self.colors],
-            size_colname: [config.get_glyph_size(avp.val) for avp in self.sizes]
+            size_colname: [avp.val for avp in self.sizes]
         }
         return x_colname, y_colname, color_colname, size_colname, data
 

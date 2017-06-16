@@ -1,9 +1,11 @@
-from itertools import chain, cycle
-from typing import List, Any, Generator
+from itertools import chain
+from typing import List, Any, Union
 
 from pylow.data.attributes import Measure, Dimension
 from pylow.data_preparation.avp import AVP
 from pylow.utils import reverse_lerp
+
+Number = Union[int, float]
 
 
 class SizingBehaviour:
@@ -28,15 +30,11 @@ class SizingBehaviour:
         if size is None:
             return NoColorSizingBehaviour(vizconfig, all_plotinfos)
 
-        # there are two sizeization behaviours for dimensions:
+        # there is only one sizing behaviour for dimensions:
         # if size is an already existing dimension, it will work straight forward and size every glyph
         # if size is a new dimension, the aggregation will additionally split the data into (much) more glyphs
         elif isinstance(size, Dimension):
-            if size in vizconfig.columns_and_rows:
-                return ExistingDimensionSizingBehaviour(vizconfig, all_plotinfos)
-            else:
-                return NewDimensionSizingBehaviour(vizconfig, all_plotinfos)
-
+            return DimensionSizingBehaviour(vizconfig, all_plotinfos)
         # for measures, it makes no difference whether it's a new or existing attribute
         # sizeization is based on the min-max range then
         elif isinstance(size, Measure):
@@ -61,7 +59,7 @@ class NoColorSizingBehaviour(SizingBehaviour):
         return [AVP('Default Size', self.vizconfig.mark_type.value.glyph_size_factor)] * len(plot_info.x_coords)
 
 
-class ExistingDimensionSizingBehaviour(SizingBehaviour):
+class DimensionSizingBehaviour(SizingBehaviour):
     """ If the size is an already existing dimension, it will work straight forward and size every glyph
     """
 
@@ -70,47 +68,31 @@ class ExistingDimensionSizingBehaviour(SizingBehaviour):
         """
         # find the variations of the dimensions value
         conf_size = self.vizconfig.size
+        base_size = self.vizconfig.mark_type.value.glyph_size_factor
 
+        # find all variations
         variations = [pi.variations_of(conf_size) for pi in self.all_plotinfos]
         possible_vals = sorted(set(chain(*variations)))
+
         attribute_vals = [avp.val for avp in plot_info.find_attributes(conf_size)]
 
-        # create a avp with (Attribute, hex_of_size) for each value
-        avps = [AVP(conf_size, self._get_size_for_value(curr_val, possible_vals)) for curr_val in attribute_vals]
+        # create a avp with (Attribute, size) for each value
+        get_size = self._get_size_for_dimension
+        sizes = [get_size(curr_val, possible_vals, base_size) for curr_val in attribute_vals]
+
+        avps = [AVP(conf_size, size) for size in sizes]
         return avps
 
-    def _get_size_for_value(self, value, all_values):
-        default_size = self.vizconfig.mark_type.value.glyph_size_factor
+    @staticmethod
+    def _get_size_for_dimension(value: Number, all_values: List[Number], base_size: Number) -> Number:
         index = all_values.index(value)
         indicie_range = len(all_values) - 1
         assert index > -1
-        zero_index = indicie_range / 2
-        current_position = zero_index - index
-        scaling_factor_per_step = default_size / indicie_range
-        current_size = default_size + (current_position * scaling_factor_per_step)
+        zero_position = -1 * (indicie_range / 2)
+        current_position = zero_position + index  # can range from -(indicie_range/2) to (indicie_range/2)
+        scaling_factor_per_step = base_size / indicie_range
+        current_size = base_size + (current_position * scaling_factor_per_step)
         return current_size
-
-
-class NewDimensionSizingBehaviour(SizingBehaviour):
-    """ If the size is a new dimension, the aggregation will additionally split the data into (much) more glyphs
-
-    This strategy class will deal wit hthose cases
-    """
-
-    def get_sizes(self, plot_info: 'PlotInfo') -> List['AVP']:
-        size_data = plot_info.additional_data
-        # TODO FIXME: This is ALL extra data, need to handle cases where more of those appear
-        # TODO FIXME: Need to consider ALL data in ALL plots here
-        assert len(size_data) == len(plot_info.x_coords)
-        return list(self.get_sizes_for_size_separators(size_data))
-
-    @staticmethod
-    def get_sizes_for_size_separators(sizes: List['AVP']) -> Generator[AVP, None, None]:
-        all_values = set(avp.val for avp in sizes)
-        # TODO FIXME this is just an example
-        val_to_size = dict(zip(all_values, cycle([1, 2, 3, 4])))
-        for avp in sizes:
-            yield AVP(avp.attr, val_to_size[avp.val])
 
 
 class MeasureSizingBehaviour(SizingBehaviour):
@@ -135,8 +117,8 @@ class MeasureSizingBehaviour(SizingBehaviour):
         """ Reverse-lerp's a size value based on the possible values
         """
         relative_in_range = reverse_lerp(curr_val, possible_vals)  # between 0 and 1
-        # turn into value from 0.5 to 2
-        size_factor = (relative_in_range + 0.5) * (4 / 3)
-        size = self.vizconfig.mark_type.value.glyph_size_factor * size_factor
+        assert 0.0 <= relative_in_range <= 1.0
+        scale_factor = relative_in_range + 0.5  # Turn into range (0.5, 1.5)
+        size = self.vizconfig.mark_type.value.glyph_size_factor * scale_factor
         size_avp = AVP(self.vizconfig.size, size)
         return size_avp

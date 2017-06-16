@@ -1,4 +1,3 @@
-from pylow.data.attributes import Dimension, Measure
 from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.colorization_behaviour import *
 
@@ -37,5 +36,5 @@ def test_colorization_behaviour_selection():
 
     # check that the colorization behaviour dispatch returns the correct classes
     for conf, _class in zip(vizconfigs, classes):
-        behaviour = ColorizationBehaviour.get_correct_behaviour(conf)
+        behaviour = ColorizationBehaviour.get_correct_behaviour(conf, [])
         assert isinstance(behaviour, _class)

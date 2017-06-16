@@ -40,6 +40,6 @@ MarkInfo = namedtuple('MarkInfo', ['glyph_name', 'glyph_size_factor'])
 
 @unique
 class MarkType(Enum):
-    CIRCLE = MarkInfo('Circle', 4)
+    CIRCLE = MarkInfo('Circle', 10)
     BAR = MarkInfo('VBar', 0.25)
     LINE = MarkInfo('Line', 1)

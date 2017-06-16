@@ -36,7 +36,7 @@ def check_html(viz_config, infos):
 
     # check for plot amounts
     plots = [ref for ref in references if ref['type'] == 'Plot']
-    glyphs = [ref for ref in references if ref['type'] == 'Circle']  # FIXME dynamic glyph selection
+    glyphs = [ref for ref in references if ref['type'] == viz_config.mark_type.value.glyph_name]
     renderers = [ref for ref in references if ref['type'] == 'GlyphRenderer']
     assert len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']
 
@@ -59,6 +59,7 @@ def extract_plot_structure(file_name: str) -> dict:
 
     scripts = soup.find_all('script')
     relevant_script = [s for s in scripts if 'docs_json =' in s.text][0]
+    # scrape the relevant JSON fragment from the script text
     string = relevant_script.text.split('docs_json =')[-1]
     string = string.split('var render_items =')[0]
     string = string.replace(';', '')  # FIXME better splitting?

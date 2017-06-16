@@ -12,7 +12,8 @@ def generate_tooltip(renderer: GlyphRenderer, plot_info: PlotInfo) -> HoverTool:
     x_colname = plot_info.x_coords[0].attr.col_name
     y_colname = plot_info.y_coords[0].attr.col_name
 
-    additional = set(f'{avp.attr.col_name}: {avp.val}' for avp in chain(plot_info.x_seps, plot_info.y_seps))
+    other_attributes = chain(plot_info.x_seps, plot_info.y_seps)
+    additional = set(f'{avp.attr.col_name}: {avp.val}' for avp in other_attributes)
 
     tooltip = f"""
     <div>
@@ -21,6 +22,9 @@ def generate_tooltip(renderer: GlyphRenderer, plot_info: PlotInfo) -> HoverTool:
     </div>
     <div>
         <span style="font-size: 10px;">{'<br>'.join(additional)}</span><br>
+        <span style="font-size: 15px;">Size: @_size</span><br>
+        <span style="font-size: 15px;">Color: @_color</span>
+
     </div>
     """
     return HoverTool(tooltips=tooltip, anchor='top_center', renderers=[renderer])
