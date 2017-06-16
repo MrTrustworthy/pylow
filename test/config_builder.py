@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from itertools import product
 from typing import Generator, List, Tuple
@@ -7,6 +8,14 @@ import pytest
 from pylow.data.attributes import Dimension, Measure, Attribute
 from pylow.data.vizconfig import VizConfig
 from pylow.utils import MarkType
+
+
+def get_configs(filtering=None):
+    all_configs = build_configs()
+    if filtering is not None:
+        all_configs = filter(lambda vc: re.search(filtering, str(vc[0])), all_configs)
+
+    return all_configs
 
 
 def build_configs() -> Generator[VizConfig, None, None]:
@@ -35,7 +44,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
     row_dim_combs = [[Dimension('Ship Mode')]]
     col_measure_combs = [[]]
     row_measure_combs = [[Measure('Quantity')]]
-    colors = [None]  # , Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
+    colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
     sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
     marks = [MarkType.CIRCLE]
 
@@ -45,5 +54,8 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
     return attribute_order, permuations
 
 
+# Use regex to limit testing to the configurations currently relevant while developing
+configs = get_configs()  # r'sizeX_col\wX')
+
 # Pytest parameterized decorator to iterate over all possible configurations in testing
-CONFIG_ROTATE = pytest.mark.parametrize("viz_config,infos", list(build_configs()))
+CONFIG_ROTATE = pytest.mark.parametrize("viz_config,infos", list(configs))
