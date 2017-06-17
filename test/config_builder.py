@@ -87,7 +87,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
 
 
 # Use regex to limit testing to the configurations currently relevant while developing
-configs = get_configs()  # r'sizeX_col\wX')
+configs = get_configs()  # r'sizeN._colN.')
 
 # Pytest parameterized decorator to iterate over all possible configurations in testing
 CONFIG_ROTATE = pytest.mark.parametrize("viz_config,infos", list(configs))

@@ -1,7 +1,6 @@
 from itertools import chain
 from typing import Dict, List, Tuple, Any, Union
 
-from data import VizConfig
 from pylow.data.attributes import Attribute
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
@@ -28,8 +27,6 @@ class PlotInfo:
         self.colorization_behaviour = colorization_behaviour
         self.sizing_behaviour = sizing_behaviour
 
-        self._sizes = None  # will be drawn from property
-
     @property
     def colors(self) -> List[AVP]:
         return self.colorization_behaviour.get_colors(self)
@@ -49,7 +46,7 @@ class PlotInfo:
     def would_be_in_same_plot(self, other: 'PlotInfo') -> bool:
         return self.x_seps == other.x_seps and self.y_seps == other.y_seps
 
-    def get_viz_data(self, config: 'VizConfig') -> Tuple[str, str, str, str, Dict[str, List[Union[str, int, float]]]]:
+    def get_viz_data(self) -> Tuple[str, str, str, str, Dict[str, List[Union[str, int, float]]]]:
         # FIXME holy crap this method is atrocious, the return type makes my eyes water
 
         x_colname = self.x_coords[0].attr.col_name

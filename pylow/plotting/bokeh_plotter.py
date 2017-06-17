@@ -67,7 +67,7 @@ class Plotter:
     def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, str, str, ColumnDataSource]:
         """ Create a representation of the data for plotting that is suitable for consumption by bokeh"""
 
-        x_colname, y_colname, color_colname, size_colname, data = plot_info.get_viz_data(self.aggregator.config)
+        x_colname, y_colname, color_colname, size_colname, data = plot_info.get_viz_data()
         source = ColumnDataSource(data=data)
         return x_colname, y_colname, color_colname, size_colname, source
 
