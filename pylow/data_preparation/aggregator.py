@@ -1,4 +1,3 @@
-from functools import reduce
 from itertools import chain
 from typing import Dict, List, Tuple, Union
 
@@ -51,20 +50,20 @@ class Aggregator:
 
         # add some buffer so the drawing looks better
         if isinstance(self.y_min, number):
-            range = int((self.y_max - self.y_min) / 10)
-            self.y_min, self.y_max = self.y_min - range, self.y_max + range
+            _range = int((self.y_max - self.y_min) / 10)
+            self.y_min, self.y_max = self.y_min - _range, self.y_max + _range
 
         if isinstance(self.x_min, number):
-            range = int((self.x_max - self.x_min) / 10)
-            self.x_min, self.x_max = self.x_min - range, self.x_max + range
+            _range = int((self.x_max - self.x_min) / 10)
+            self.x_min, self.x_max = self.x_min - _range, self.x_max + _range
 
     def _calculate_ncols(self, data: List['PlotInfo']) -> int:
         column_possibilities = []
         for avp in data[0].x_seps:
             possibilities = len(self.datasource.get_variations_of(avp.attr))
             column_possibilities.append(possibilities)
-        ncols = reduce(lambda x, y: x + y, column_possibilities)
-        return ncols
+        ncols = sum(column_possibilities)
+        return max(ncols, 1)
 
     # prepare data
     def _get_assigned_data(self, data) -> List[List[AVP]]:

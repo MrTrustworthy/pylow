@@ -102,7 +102,8 @@ class Plotter:
             plot.add_layout(label)
 
         # Labels top
-        if self.aggregator.is_in_first_row(plot_info):
+        # if there are no x_seps (aka only one column), there is no need to draw additional labels
+        if self.aggregator.is_in_first_row(plot_info) and len(plot_info.x_seps) > 0:
             text = plot_info.x_seps[-1].val
             label = Label(x=options['plot_width'] // 2, y=options['plot_height'], x_units='screen',
                           y_units='screen', text=text, render_mode='css', text_align='center')

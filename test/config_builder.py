@@ -72,7 +72,7 @@ def _build_config_dicts() -> Generator[dict, None, None]:
 
 
 def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
-    col_dim_combs = [[Dimension('Category'), Dimension('Region')]]
+    col_dim_combs = [[Dimension('Category')], [Dimension('Category'), Dimension('Region')]]
     row_dim_combs = [[Dimension('Ship Mode')]]
     col_measure_combs = [[]]
     row_measure_combs = [[Measure('Quantity')]]
@@ -87,7 +87,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
 
 
 # Use regex to limit testing to the configurations currently relevant while developing
-configs = get_configs()  # r'sizeN._colN.')
+configs = get_configs(r'\dd0m_1d1m_sizeN._colN.')
 
 # Pytest parameterized decorator to iterate over all possible configurations in testing
 CONFIG_ROTATE = pytest.mark.parametrize("viz_config,infos", list(configs))
