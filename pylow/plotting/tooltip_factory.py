@@ -9,8 +9,8 @@ def generate_tooltip(renderer: GlyphRenderer, plot_info: PlotInfo) -> HoverTool:
     """ Creates and returns the tooltip-template for this plot"""
     # TODO FIXME: Figure out how to approach this, currently basically only a tech demo
     # TODO FIXME: need to hover it upwards of the point, otherwise it's shadowed by plots further down
-    x_colname = plot_info.x_coords[0].attr.col_name
-    y_colname = plot_info.y_coords[0].attr.col_name
+    x_colname = plot_info.x_coords[0].attr.col_name if len(plot_info.x_coords) > 0 else ''  # FIXME #25
+    y_colname = plot_info.y_coords[0].attr.col_name if len(plot_info.y_coords) > 0 else ''  # FIXME #25
 
     other_attributes = chain(plot_info.x_seps, plot_info.y_seps)
     additional = set(f'{avp.attr.col_name}: {avp.val}' for avp in other_attributes)

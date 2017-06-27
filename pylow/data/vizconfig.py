@@ -8,7 +8,19 @@ Number = Union[int, float]
 AttributeSubclass = TypeVar('AttributeSubclass', Dimension, Measure)
 
 
+class NoSuchAttributeException(Exception):
+    pass
+
+
 class VizConfig:
+    """ The VizConfig holds informations about the composition of visualizations/plots
+
+    Any information that is needed for the data aggregation (dimensions, measures)
+    and plot generation (rows, columns) as well as styling (glyphs, colors, sizes, ...) is encapsulated here.
+
+    This class is vital for data exploration by allowing an user to modify the viz that is generated.
+    """
+
     def __init__(
             self,
             columns: List[Attribute],
@@ -26,6 +38,10 @@ class VizConfig:
 
     @classmethod
     def from_dict(cls, _dict: dict) -> 'VizConfig':
+        """ Factory to create a VizConfig based on a dict object
+
+        Mainly used for testing right now
+        """
         columns = _dict.get('columns', [])
         rows = _dict.get('rows', [])
         color = _dict.get('color', None)
@@ -77,19 +93,27 @@ class VizConfig:
         return list(chain(self.dimensions, self.measures))
 
     @property
-    def previous_columns(self):
+    def previous_columns(self) -> List[Attribute]:
+        if len(self.columns) == 0:
+            return []
         return self.columns[:-1]
 
     @property
-    def last_column(self):
+    def last_column(self) -> Attribute:
+        if len(self.columns) == 0:
+            raise NoSuchAttributeException('No Attributes in self.columns')
         return self.columns[-1]
 
     @property
-    def previous_rows(self):
+    def previous_rows(self) -> List[Attribute]:
+        if len(self.rows) == 0:
+            return []
         return self.rows[:-1]
 
     @property
-    def last_row(self):
+    def last_row(self) -> Attribute:
+        if len(self.rows) == 0:
+            raise NoSuchAttributeException('No Attributes in self.rows')
         return self.rows[-1]
 
     @staticmethod
@@ -100,9 +124,17 @@ class VizConfig:
         return str(self)
 
     def __str__(self) -> str:
+        """ Returns a String describing the config, such as CONF_1d0m_1d1m_sizeDX_colDX_circle
+        """
+
         col = f'{len(self.column_dimensions)}d{len(self.column_measures)}m'
         row = f'{len(self.row_dimensions)}d{len(self.row_measures)}m'
-        size = f'size{type(self.size).__name__[0].upper()}{"X" if self.size not in self.columns_and_rows else ""}'
-        color = f'col{type(self.color).__name__[0].upper()}{"X" if self.color not in self.columns_and_rows else ""}'
+
+        x_val_size = "X" if self.size not in self.columns_and_rows else ""
+        size = f'size{type(self.size).__name__[0].upper()}{x_val_size}'
+
+        x_val_col = "X" if self.color not in self.columns_and_rows else ""
+        color = f'col{type(self.color).__name__[0].upper()}{x_val_col}'
+
         mark = self.mark_type.value.glyph_name.lower()
         return '_'.join(['CONF', col, row, size, color, mark])

@@ -59,7 +59,9 @@ class NoColorColorizationBehaviour(ColorizationBehaviour):
     def get_colors(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Will return a list of default colors matching the amount of glyphs
         """
-        return [AVP('Default Color', DEFAULT_COLOR)] * len(plot_info.x_coords)
+        # for 0d0m-configurations, the lengths of axes might differ
+        longest_axes = max(len(plot_info.x_coords), len(plot_info.y_coords))
+        return [AVP('Default Color', DEFAULT_COLOR)] * longest_axes
 
 
 class ExistingDimensionColorizationBehaviour(ColorizationBehaviour):

@@ -18,7 +18,9 @@ class PlotInfo:
             colorization_behaviour: ColorizationBehaviour,
             sizing_behaviour: SizingBehaviour
     ):
-        assert len(x_coords) == len(y_coords)
+        # those two should be the same, or at least one is non-existent
+        assert len(x_coords) == len(y_coords) or min(len(x_coords), len(y_coords)) == 0
+
         self.x_coords = x_coords
         self.y_coords = y_coords
         self.x_seps = x_seps
@@ -48,15 +50,16 @@ class PlotInfo:
 
     def get_viz_data(self) -> Tuple[str, str, str, str, Dict[str, List[Union[str, int, float]]]]:
         # FIXME holy crap this method is atrocious, the return type makes my eyes water
+        # FIXME FIXME FIXME
 
-        x_colname = self.x_coords[0].attr.col_name
-        y_colname = self.y_coords[0].attr.col_name
+        x_colname = self.x_coords[0].attr.col_name if len(self.x_coords) > 0 else ''
+        y_colname = self.y_coords[0].attr.col_name if len(self.y_coords) > 0 else ''
         color_colname = '_color'
         size_colname = '_size'
         # DATA
         data = {
-            x_colname: [avp.val for avp in self.x_coords],
-            y_colname: [avp.val for avp in self.y_coords],
+            x_colname: [avp.val for avp in self.x_coords] or [0],  # default value for 0d0m_xd1m configs
+            y_colname: [avp.val for avp in self.y_coords] or [0],  # default value for xd1m_0d0m configs
             color_colname: [avp.val for avp in self.colors],
             size_colname: [avp.val for avp in self.sizes]
         }

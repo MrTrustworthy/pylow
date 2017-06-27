@@ -83,10 +83,13 @@ class Plotter:
             'min_border': 0,
             'min_border_left': 0 if self.aggregator.is_in_first_column(plot_info) else 0
         }
-        # title top
+
+        # set title on top if it's in the top middle
         if self.aggregator.is_in_center_top_column(plot_info):
             # TODO multiple titles for multiple layers of dimensions
-            text = '/'.join(sep.attr.col_name for sep in chain(plot_info.x_seps, [plot_info.x_coords[0]]))
+            # FIXME this needs its own function
+            x_coord_sample = [plot_info.x_coords[0]] if len(plot_info.x_coords) > 0 else []
+            text = '/'.join(sep.attr.col_name for sep in chain(plot_info.x_seps, x_coord_sample))
             options['title'] = Title(text=text, align='center')
 
         return options
@@ -120,15 +123,15 @@ class Plotter:
         if self.aggregator.is_in_first_column(plot_info):
             plot.add_layout(y_ax, 'left')
 
-        # Don't create grid lines for dimensions
+        # Don't create grid lines for dimensions, only for measures
         # TODO FIXME figure out how to do this the best way, is currently only based on IS_STRING
-        value = [avp.val for avp in plot_info.x_coords][0]
-        if not isinstance(value, str):
+        value = [avp.val for avp in plot_info.x_coords] or ['']  # FIXME #25
+        if not isinstance(value[0], str):
             grid = Grid(dimension=0, ticker=x_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
-        value = [avp.val for avp in plot_info.y_coords][0]
-        if not isinstance(value, str):
+        value = [avp.val for avp in plot_info.y_coords] or ['']  # FIXME #25
+        if not isinstance(value[0], str):
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
@@ -167,6 +170,11 @@ class Plotter:
 
         # TODO FIXME check based on dimension/measure instead of IS_STR
         values = unique_list([avp.val for avp in getattr(data, f'{axis}_coords')])
+
+        if len(values) == 0:  # FIXME #25
+            # handle the case of 0d0m-configs
+            values = ['']
+
         if isinstance(values[0], str):
             return FactorRange(*values)
         else:
@@ -176,14 +184,17 @@ class Plotter:
     def _get_axis(self, data: PlotInfo, axis: str) -> Tuple[Ticker, Axis]:
         """ Creates and returns the axies object for a given axis direction & data"""
 
-        values = [avp.val for avp in getattr(data, f'{axis}_coords')]
         options = {
             'major_tick_in': 0,
             'major_tick_out': 0
         }
         # only show the axis labels left, never at the bottom
         if axis == 'y':
-            options['axis_label'] = getattr(data, f'{axis}_coords')[0].attr.col_name
+            sample_data_list = getattr(data, f'{axis}_coords')  # FIXME #25
+            sample_data = sample_data_list[0].attr.col_name if len(sample_data_list) > 0 else ''
+            options['axis_label'] = sample_data
+
+        values = [avp.val for avp in getattr(data, f'{axis}_coords')] or ['']  # FIXME #25
 
         if isinstance(values[0], str):
             ticker = CategoricalTicker()

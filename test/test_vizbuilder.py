@@ -2,6 +2,7 @@ import json
 
 from bs4 import BeautifulSoup
 
+from pylow.data.vizconfig import NoSuchAttributeException
 from pylow.data_preparation.aggregator import Aggregator
 from pylow.plotting import Plotter
 from .config_builder import CONFIG_ROTATE
@@ -60,7 +61,10 @@ def check_html(viz_config, infos) -> None:
         assert len(set(all_sizes)) > 1
 
     # check for glyph amounts
-    colname = viz_config.last_column.col_name
+    try:
+        colname = viz_config.last_column.col_name
+    except NoSuchAttributeException:
+        colname = ''
     glyph_amounts = [len(d[colname]) for d in data]
     # since not all plots will contain all dimension values, the glyph amount can be less than the max amount
     assert max(glyph_amounts) <= infos['glyphs_in_plot_amount']

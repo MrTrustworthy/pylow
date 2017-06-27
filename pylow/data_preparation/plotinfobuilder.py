@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import List
 
-from pylow.data.vizconfig import VizConfig
+from pylow.data.vizconfig import VizConfig, NoSuchAttributeException
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
 from pylow.data_preparation.plotinfo import PlotInfo
@@ -31,9 +31,18 @@ class PlotInfoBuilder:
         Will not return an object but rather put it into the plotinfo_cache
         """
         find_index = config.all_attrs.index
+        x_coords = []  # default value, in case no values are there
+        y_coords = []  # default value, in case no values are there
 
-        x_coords = [plot_data[find_index(config.last_column)]]
-        y_coords = [plot_data[find_index(config.last_row)]]
+        try:
+            x_coords = [plot_data[find_index(config.last_column)]]
+        except NoSuchAttributeException:
+            pass
+        try:
+            y_coords = [plot_data[find_index(config.last_row)]]
+        except NoSuchAttributeException:
+            pass
+
         x_seps = [plot_data[find_index(col)] for col in config.previous_columns]
         y_seps = [plot_data[find_index(col)] for col in config.previous_rows]
 
@@ -45,7 +54,8 @@ class PlotInfoBuilder:
 
         col_behaviour = ColorizationBehaviour.get_correct_behaviour(config, plotinfo_cache)
         size_behaviour = SizingBehaviour.get_correct_behaviour(config, plotinfo_cache)
-        # create new object and determine of there are already fitting existing objects
+
+        # create new object and determine if there are already fitting existing objects
         new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour, size_behaviour)
         existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), plotinfo_cache))
 

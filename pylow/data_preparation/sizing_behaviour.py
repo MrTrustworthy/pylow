@@ -56,7 +56,9 @@ class NoColorSizingBehaviour(SizingBehaviour):
     def get_sizes(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Will return a list of default sizes matching the amount of glyphs
         """
-        return [AVP('Default Size', self.vizconfig.mark_type.value.glyph_size_factor)] * len(plot_info.x_coords)
+        # for 0d0m-configurations, the lengths of axes might differ
+        longest_axes = max(len(plot_info.x_coords), len(plot_info.y_coords))
+        return [AVP('Default Size', self.vizconfig.mark_type.value.glyph_size_factor)] * longest_axes
 
 
 class DimensionSizingBehaviour(SizingBehaviour):
