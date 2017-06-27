@@ -8,5 +8,5 @@ __pycache__/
 .cache
 .venv
 .eggs/
-test/temp/
+test/temp/*.html
 Tapylow.egg-info
