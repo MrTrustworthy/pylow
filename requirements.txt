@@ -1,4 +1,7 @@
 appdirs==1.4.3
+beautifulsoup4==4.6.0
+bokeh==0.12.5
+colorama==0.3.9
 cycler==0.10.0
 Jinja2==2.9.6
 MarkupSafe==1.0
@@ -8,8 +11,13 @@ mypy==0.511
 numpy==1.12.1
 packaging==16.8
 pandas==0.20.1
+py==1.4.33
 pyparsing==2.2.0
+pytest==3.0.7
 python-dateutil==2.6.0
 pytz==2017.2
+PyYAML==3.12
+requests==2.14.2
 six==1.10.0
+tornado==4.5.1
 typed-ast==1.0.3
