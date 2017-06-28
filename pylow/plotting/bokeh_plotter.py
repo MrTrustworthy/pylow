@@ -1,4 +1,3 @@
-from itertools import chain
 from math import pi
 from typing import Any, Dict, Tuple
 
@@ -88,8 +87,9 @@ class Plotter:
         if self.aggregator.is_in_center_top_column(plot_info):
             # TODO multiple titles for multiple layers of dimensions
             # FIXME this needs its own function
-            x_coord_sample = [plot_info.x_coords[0]] if len(plot_info.x_coords) > 0 else []
-            text = '/'.join(sep.attr.col_name for sep in chain(plot_info.x_seps, x_coord_sample))
+            x_coord_col_name = plot_info.get_example_avp_for_axis('x').attr.col_name
+            x_seps_col_names = [sep.attr.col_name for sep in plot_info.x_seps]
+            text = '/'.join(x_seps_col_names + [x_coord_col_name])
             options['title'] = Title(text=text, align='center')
 
         return options
@@ -99,7 +99,8 @@ class Plotter:
 
         # Labels on the left
         if self.aggregator.is_in_first_column(plot_info):
-            text = plot_info.y_seps[-1].val.replace(' ', '\n')  # FIXME inserting \n does nothing
+            # TODO can we use plotinfo.example_val... here?
+            text = plot_info.y_seps[-1].val.replace(' ', '\n')  # FIXME inserting \n does nothing, Issue #2
             label = Label(x=0, y=options['plot_height'] // 2, x_units='screen',
                           y_units='screen', text=text, render_mode='css', text_align='right')
             plot.add_layout(label)
@@ -107,6 +108,7 @@ class Plotter:
         # Labels top
         # if there are no x_seps (aka only one column), there is no need to draw additional labels
         if self.aggregator.is_in_first_row(plot_info) and len(plot_info.x_seps) > 0:
+            # TODO can we use plotinfo.example_val... here?
             text = plot_info.x_seps[-1].val
             label = Label(x=options['plot_width'] // 2, y=options['plot_height'], x_units='screen',
                           y_units='screen', text=text, render_mode='css', text_align='center')
@@ -125,13 +127,13 @@ class Plotter:
 
         # Don't create grid lines for dimensions, only for measures
         # TODO FIXME figure out how to do this the best way, is currently only based on IS_STRING
-        value = [avp.val for avp in plot_info.x_coords] or ['']  # FIXME #25
-        if not isinstance(value[0], str):
+        value = plot_info.get_example_avp_for_axis('x').val
+        if not isinstance(value, str):
             grid = Grid(dimension=0, ticker=x_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
-        value = [avp.val for avp in plot_info.y_coords] or ['']  # FIXME #25
-        if not isinstance(value[0], str):
+        value = plot_info.get_example_avp_for_axis('y').val
+        if not isinstance(value, str):
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
 
@@ -165,15 +167,15 @@ class Plotter:
         else:
             assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
-    def _get_range(self, data: PlotInfo, axis: str) -> Range:
-        """ Creates a bokeh.Range object for the given axis & data"""
+    def _get_range(self, plot_info: PlotInfo, axis: str) -> Range:
+        """ Creates a bokeh.Range object for the given axis & plot_info"""
 
         # TODO FIXME check based on dimension/measure instead of IS_STR
-        values = unique_list([avp.val for avp in getattr(data, f'{axis}_coords')])
+        values = unique_list([avp.val for avp in getattr(plot_info, f'{axis}_coords')])
 
         if len(values) == 0:  # FIXME #25
             # handle the case of 0d0m-configs
-            values = ['']
+            values = [plot_info.get_example_avp_for_axis(axis).val]
 
         if isinstance(values[0], str):
             return FactorRange(*values)
@@ -190,13 +192,11 @@ class Plotter:
         }
         # only show the axis labels left, never at the bottom
         if axis == 'y':
-            sample_data_list = getattr(data, f'{axis}_coords')  # FIXME #25
-            sample_data = sample_data_list[0].attr.col_name if len(sample_data_list) > 0 else ''
-            options['axis_label'] = sample_data
+            sample_colname = data.get_example_avp_for_axis(axis).attr.col_name
+            options['axis_label'] = sample_colname
 
-        values = [avp.val for avp in getattr(data, f'{axis}_coords')] or ['']  # FIXME #25
-
-        if isinstance(values[0], str):
+        sample_value = data.get_example_avp_for_axis(axis).val
+        if isinstance(sample_value, str):
             ticker = CategoricalTicker()
             axis = CategoricalAxis(ticker=ticker, major_label_orientation=pi / 2, **options)
         else:

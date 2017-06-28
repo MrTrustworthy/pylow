@@ -6,6 +6,8 @@ from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
 from pylow.data_preparation.sizing_behaviour import SizingBehaviour
 
+DEFAULT_AVP = AVP(Attribute(''), '')
+
 
 class PlotInfo:
     def __init__(
@@ -48,18 +50,41 @@ class PlotInfo:
     def would_be_in_same_plot(self, other: 'PlotInfo') -> bool:
         return self.x_seps == other.x_seps and self.y_seps == other.y_seps
 
+    def get_coord_values(self, x_or_y: str) -> List[Any]:
+        """ Will return all values for a given coords axis
+        If the axis is empty, will return a default AVP
+        """
+
+        vals = getattr(self, f'{x_or_y}_coords')
+        if len(vals) > 0:
+            return [avp.val for avp in vals]
+        else:
+            return [DEFAULT_AVP.val]
+
+    def get_example_avp_for_axis(self, x_or_y: str) -> AVP:
+        """Returns an example AVP for the x- or y_coords
+
+        Originates from issue #25
+        """
+
+        values = getattr(self, f'{x_or_y}_coords')
+        if len(values) > 0:
+            return values[0]
+        return DEFAULT_AVP
+
+
     def get_viz_data(self) -> Tuple[str, str, str, str, Dict[str, List[Union[str, int, float]]]]:
         # FIXME holy crap this method is atrocious, the return type makes my eyes water
         # FIXME FIXME FIXME
 
-        x_colname = self.x_coords[0].attr.col_name if len(self.x_coords) > 0 else ''
-        y_colname = self.y_coords[0].attr.col_name if len(self.y_coords) > 0 else ''
+        x_colname = self.get_example_avp_for_axis('x').attr.col_name
+        y_colname = self.get_example_avp_for_axis('y').attr.col_name
         color_colname = '_color'
         size_colname = '_size'
         # DATA
         data = {
-            x_colname: [avp.val for avp in self.x_coords] or [0],  # default value for 0d0m_xd1m configs
-            y_colname: [avp.val for avp in self.y_coords] or [0],  # default value for xd1m_0d0m configs
+            x_colname: self.get_coord_values('x'),  # default value for 0d0m_xd1m configs
+            y_colname: self.get_coord_values('y'),  # default value for xd1m_0d0m configs
             color_colname: [avp.val for avp in self.colors],
             size_colname: [avp.val for avp in self.sizes]
         }

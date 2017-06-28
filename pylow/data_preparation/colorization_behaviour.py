@@ -92,7 +92,8 @@ class NewDimensionColorizationBehaviour(ColorizationBehaviour):
         color_data = plot_info.find_attributes(self.vizconfig.color)
         # TODO FIXME: Need to consider ALL data in ALL plots here
         # TODO FIXME: Do we need sorting here to ensure dimensions are colored the same?
-        assert len(color_data) == len(plot_info.x_coords)
+        plot_value_amount = max(len(plot_info.x_coords), len(plot_info.x_coords))
+        assert plot_value_amount in (len(color_data), 0)
         return list(self.get_colors_for_color_separators(color_data))
 
     @staticmethod
