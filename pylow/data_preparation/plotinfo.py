@@ -54,12 +54,12 @@ class PlotInfo:
         """ Will return all values for a given coords axis
         If the axis is empty, will return a default AVP
         """
-
+        other = 'y' if x_or_y is 'x' else 'x'
         vals = getattr(self, f'{x_or_y}_coords')
         if len(vals) > 0:
             return [avp.val for avp in vals]
         else:
-            return [DEFAULT_AVP.val]
+            return [DEFAULT_AVP.val] * len(self.get_coord_values(other))
 
     def get_example_avp_for_axis(self, x_or_y: str) -> AVP:
         """Returns an example AVP for the x- or y_coords

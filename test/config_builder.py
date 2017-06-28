@@ -96,7 +96,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
 
 # Use regex to limit testing to the configurations currently relevant while developing
 # TODO can we make this depend on a pytest argument? then we could set up CI to test more specific stuff
-configs = get_configs(r'CONF_0d0m_1d1m_sizeNX_colNX_circle')
+configs = get_configs()
 
 # Pytest parameterized decorator to iterate over all possible configurations in testing
 # This object is the main export of this test class and used in other testing code
