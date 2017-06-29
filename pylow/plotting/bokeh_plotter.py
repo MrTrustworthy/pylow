@@ -1,14 +1,12 @@
 from math import pi
 from typing import Any, Dict, Tuple
 
-from bokeh.core.properties import field
 from bokeh.layouts import Column as BokehColumn
 from bokeh.layouts import gridplot
 from bokeh.models import (BasicTicker, CategoricalAxis, CategoricalTicker, ColumnDataSource, FactorRange, Grid,
                           LinearAxis, Plot, Range1d)
 from bokeh.models.annotations import Label, Title
 from bokeh.models.axes import Axis
-from bokeh.models.glyphs import Circle, Glyph, VBar
 from bokeh.models.ranges import Range
 from bokeh.models.tickers import Ticker
 
@@ -16,9 +14,9 @@ from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.aggregator import Aggregator
 from pylow.data_preparation.plotinfo import PlotInfo
-from pylow.extensions.flexline import FlexLine
+from pylow.plotting.glyph_factory import create_glyph
 from pylow.plotting.tooltip_factory import generate_tooltip
-from pylow.utils import unique_list, MarkType
+from pylow.utils import unique_list
 
 
 class Plotter:
@@ -41,7 +39,7 @@ class Plotter:
         Will delegate the parts of plot creation to other methods
         """
 
-        x_colname, y_colname, color_colname, size_colname, source = self._prepare_viz_data(plot_info)
+        source = ColumnDataSource(data=plot_info.get_viz_data())
 
         # RANGES
         x_range, y_range = self._get_range(plot_info, 'x'), self._get_range(plot_info, 'y')
@@ -55,20 +53,13 @@ class Plotter:
         self._add_axes_and_grids(plot, plot_info)
 
         # GLYPH
-        glyph = self._create_glyph(x_colname, y_colname, color_colname, size_colname)
+        glyph = create_glyph(self.aggregator.config.mark_type, plot_info.column_names)
         renderer = plot.add_glyph(source, glyph)
 
         # HOVER
         hover = generate_tooltip(renderer, plot_info)
         plot.add_tools(hover)
         return plot
-
-    def _prepare_viz_data(self, plot_info: PlotInfo) -> Tuple[str, str, str, str, ColumnDataSource]:
-        """ Create a representation of the data for plotting that is suitable for consumption by bokeh"""
-
-        x_colname, y_colname, color_colname, size_colname, data = plot_info.get_viz_data()
-        source = ColumnDataSource(data=data)
-        return x_colname, y_colname, color_colname, size_colname, source
 
     def _get_plot_options(self, plot_info: PlotInfo, x_range: Range, y_range: Range) -> Dict[str, Any]:
         """ Create the configuration object to instantiate a bokeh.Plot object"""
@@ -136,36 +127,6 @@ class Plotter:
         if not isinstance(value, str):
             grid = Grid(dimension=1, ticker=y_tick, grid_line_dash='dotted')
             plot.add_layout(grid)
-
-    def _create_glyph(self, x_colname: str, y_colname: str, color_colname: str, size_colname: str) -> Glyph:
-        """ Creates a glyph based on the configuration"""
-
-        mark_type = self.aggregator.config.mark_type
-        if mark_type == MarkType.LINE:
-            return FlexLine(
-                x=field(x_colname),
-                y=field(y_colname),
-                size=field(size_colname),
-                colors=field(color_colname)
-            )
-        elif mark_type == MarkType.BAR:
-            return VBar(
-                x=field(x_colname),
-                top=field(y_colname),
-                fill_color=field(color_colname),
-                line_color=field(color_colname),
-                width=field(size_colname)
-            )
-        elif mark_type == MarkType.CIRCLE:
-            return Circle(
-                x=field(x_colname),
-                y=field(y_colname),
-                fill_color=field(color_colname),
-                line_color=field(color_colname),
-                size=field(size_colname)
-            )
-        else:
-            assert False, f'VizConfig.mark_type must be one of {MarkType}'
 
     def _get_range(self, plot_info: PlotInfo, axis: str) -> Range:
         """ Creates a bokeh.Range object for the given axis & plot_info"""

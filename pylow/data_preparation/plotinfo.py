@@ -1,10 +1,11 @@
 from itertools import chain
-from typing import Dict, List, Tuple, Any, Union
+from typing import Dict, List, Any
 
 from pylow.data.attributes import Attribute
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
 from pylow.data_preparation.sizing_behaviour import SizingBehaviour
+from pylow.utils import ColumnNameCollection
 
 DEFAULT_AVP = AVP(Attribute(''), '')
 
@@ -39,6 +40,20 @@ class PlotInfo:
     def sizes(self) -> List[AVP]:
         return self.sizing_behaviour.get_sizes(self)
 
+    @property
+    def column_names(self) -> ColumnNameCollection:
+        """ Returns a namedtuple that contains all column names for this data (x, y, size, color)
+
+        This is needed at plotting to match column names to data and to provide labels for the axes etc.
+        """
+        x_colname = self.get_example_avp_for_axis('x').attr.col_name
+        y_colname = self.get_example_avp_for_axis('y').attr.col_name
+        color_colname = '_color'
+        size_colname = '_size'
+
+        col_names = ColumnNameCollection(x_colname, y_colname, color_colname, size_colname)
+        return col_names
+
     def find_attributes(self, attribute: Attribute) -> List[AVP]:
         all_attributes = chain(self.x_coords, self.y_coords, self.x_seps, self.y_seps, self.additional_data)
         return [avp for avp in all_attributes if avp.attr == attribute]
@@ -72,23 +87,18 @@ class PlotInfo:
             return values[0]
         return DEFAULT_AVP
 
-
-    def get_viz_data(self) -> Tuple[str, str, str, str, Dict[str, List[Union[str, int, float]]]]:
-        # FIXME holy crap this method is atrocious, the return type makes my eyes water
-        # FIXME FIXME FIXME
-
-        x_colname = self.get_example_avp_for_axis('x').attr.col_name
-        y_colname = self.get_example_avp_for_axis('y').attr.col_name
-        color_colname = '_color'
-        size_colname = '_size'
+    def get_viz_data(self) -> Dict[str, List[Any]]:
+        """ Returns the data that is supposed to be drawn in a fitting format
+        """
+        x, y, color, size = self.column_names
         # DATA
         data = {
-            x_colname: self.get_coord_values('x'),  # default value for 0d0m_xd1m configs
-            y_colname: self.get_coord_values('y'),  # default value for xd1m_0d0m configs
-            color_colname: [avp.val for avp in self.colors],
-            size_colname: [avp.val for avp in self.sizes]
+            x: self.get_coord_values('x'),  # default value for 0d0m_xd1m configs
+            y: self.get_coord_values('y'),  # default value for xd1m_0d0m configs
+            color: [avp.val for avp in self.colors],
+            size: [avp.val for avp in self.sizes]
         }
-        return x_colname, y_colname, color_colname, size_colname, data
+        return data
 
     def __str__(self):
         xvals = [x.val for x in self.x_coords]

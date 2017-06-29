@@ -4,6 +4,8 @@ from typing import List, Union, Any
 
 Number = Union[int, float]
 
+ColumnNameCollection = namedtuple('ColumnNameCollection', ['x', 'y', 'color', 'size'])
+
 
 def make_unique_string_list(content: List[str]):
     s = set()
