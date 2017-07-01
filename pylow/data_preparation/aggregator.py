@@ -5,11 +5,11 @@ from typing import Dict, List, Tuple, Union
 from numpy import number
 from pandas.core.groupby import DataFrameGroupBy
 
-from data_preparation.plotinfo import PlotInfo
 from pylow.data.attributes import Measure
 from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.avp import AVP
+from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.data_preparation.plotinfobuilder import PlotInfoBuilder
 
 Number = Union[int, float]
