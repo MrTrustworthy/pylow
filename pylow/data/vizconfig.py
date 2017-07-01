@@ -1,8 +1,9 @@
 from itertools import chain
 from typing import List, Union, TypeVar, Optional
 
+from pylow.data.attributes import Attribute, Dimension, Measure
+from pylow.logger import log
 from pylow.utils import unique_list, MarkType
-from .attributes import Attribute, Dimension, Measure
 
 Number = Union[int, float]
 AttributeSubclass = TypeVar('AttributeSubclass', Dimension, Measure)
@@ -35,6 +36,7 @@ class VizConfig:
         self.color = color  # type: Optional[Attribute]
         self.size = size  # type: Optional[Attribute]
         self.mark_type = mark_type  # type: MarkType
+        log(self, 'Initializing VizConfig')
 
     @classmethod
     def from_dict(cls, _dict: dict) -> 'VizConfig':
@@ -42,6 +44,9 @@ class VizConfig:
 
         Mainly used for testing right now
         """
+
+        log('#VizConfig_class', 'Creating VizConfig from dict')
+
         columns = _dict.get('columns', [])
         rows = _dict.get('rows', [])
         color = _dict.get('color', None)
@@ -121,9 +126,6 @@ class VizConfig:
         return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
 
     def __repr__(self) -> str:
-        return str(self)
-
-    def __str__(self) -> str:
         """ Returns a String describing the config, such as CONF_1d0m_1d1m_sizeDX_colDX_circle
         """
 

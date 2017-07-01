@@ -14,6 +14,7 @@ from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.aggregator import Aggregator
 from pylow.data_preparation.plotinfo import PlotInfo
+from pylow.logger import log
 from pylow.plotting.glyph_factory import create_glyph
 from pylow.plotting.tooltip_factory import generate_tooltip
 from pylow.utils import unique_list
@@ -23,12 +24,13 @@ class Plotter:
     def __init__(self, datasource: Datasource, config: VizConfig):
         self.aggregator = Aggregator(datasource, config)
         self.plots = []
+        log(self, 'Initializing Plotter')
 
     def create_viz(self) -> None:
         """ The single external interface for consumers; will create all plots of this instance"""
         self.aggregator.update_data()
         data = self.aggregator.data
-
+        log(self, f'Creating {len(data)} plots')
         for plotinfo in data:
             plot = self._make_plot(plotinfo)
             self.plots.append(plot)
@@ -38,7 +40,7 @@ class Plotter:
 
         Will delegate the parts of plot creation to other methods
         """
-
+        log(self, f'Creating plot for {plot_info}')
         source = ColumnDataSource(data=plot_info.get_viz_data())
 
         # RANGES
@@ -71,8 +73,10 @@ class Plotter:
             'x_range': x_range,
             'y_range': y_range,
             'min_border': 0,
-            'min_border_left': 0 if self.aggregator.is_in_first_column(plot_info) else 0
+            'min_border_left': 0 if self.aggregator.is_in_first_column(plot_info) else 0  # FIXME ???
         }
+
+        log(self, f'Using plot options: {options}')
 
         # set title on top if it's in the top middle
         if self.aggregator.is_in_center_top_column(plot_info):
@@ -169,6 +173,6 @@ class Plotter:
 
     def get_output(self) -> BokehColumn:
         """ Displays all generated plots in a grid"""
-
+        log(self, f'Generating output grid')
         grid = gridplot(self.plots, ncols=self.aggregator.ncols)
         return grid

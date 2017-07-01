@@ -10,3 +10,4 @@ __pycache__/
 .eggs/
 test/temp/*.html
 Tapylow.egg-info
+app.log

@@ -48,6 +48,8 @@ class SizingBehaviour:
         """
         raise NotImplementedError('get_sizes() is only available in subclasses of SizingBehaviour')
 
+    def __repr__(self):
+        return f'{type(self).__name__}'
 
 class NoColorSizingBehaviour(SizingBehaviour):
     """ Sizing strategy for cases where no size at all is supplied in the configuration

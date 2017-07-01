@@ -109,10 +109,9 @@ class PlotInfo:
         }
         return data
 
-    def __str__(self):
+    def __repr__(self):
         xvals = [x.val for x in self.x_coords]
         yvals = [x.val for x in self.y_coords]
-        return f'<{xvals}:{yvals}>(seps_x:{self.x_seps}, seps_y:{self.y_seps})'
-
-    def __repr__(self):
-        return str(self)
+        col_b = self.colorization_behaviour
+        size_b = self.sizing_behaviour
+        return f'<PlotInfo: [{xvals}|{yvals}] [[{self.x_seps}||{self.y_seps}]] ({repr(col_b)}|{repr(size_b)})'

@@ -11,6 +11,7 @@ from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.data_preparation.plotinfobuilder import PlotInfoBuilder
+from pylow.logger import log
 
 Number = Union[int, float]
 
@@ -23,6 +24,7 @@ class Aggregator:
     plots that is relevant for laying out the plot (number of columns and rows, min/max values, etc)
     """
     def __init__(self, datasource: Datasource, config: VizConfig):
+        log(self, f'Initializing aggregator with {datasource} and {config}')
         self.datasource = datasource
         self.config = config
 
@@ -45,8 +47,9 @@ class Aggregator:
         """ Main interface. Will update all the data of self.data based on the config and datasource
         """
         # TODO: Trigger refresh here once implementing observer pattern for vizconfigs
-
+        log(self, 'Updating data')
         raw_data = self._get_prepared_data()
+        log(self, f'Found a total of {len(raw_data.keys())} data sets')
         prepared = self._get_assigned_data(raw_data)
         final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self.config)
         self._update_data_attributes(final_data)
@@ -62,6 +65,8 @@ class Aggregator:
         self.nrows = len(data) // self.ncols
         self._update_min_max_values(data, 'x')
         self._update_min_max_values(data, 'y')
+        min_max = f'[x: ({self.x_min}/{self.x_max}) | y: ({self.y_min}/{self.y_max})]'
+        log(self, f'Updated data meta information with {self.ncols} cols, {self.nrows} rows and min/max of {min_max}')
 
     def _update_min_max_values(self, data: List['PlotInfo'], axis: str) -> None:
         # calculate min and max x_values
