@@ -6,6 +6,7 @@ from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
 from pylow.data_preparation.plotinfo import PlotInfo
 from pylow.data_preparation.sizing_behaviour import SizingBehaviour
+from pylow.logger import log
 
 
 class PlotInfoBuilder:
@@ -15,6 +16,7 @@ class PlotInfoBuilder:
 
         Will take a list of AVP-Lists and create a list of PlotInfo objects from them
         """
+        log('PlotInfoBuilder_class', f'Creating all plot infos for {len(data)} rows of data [config is {config}]')
         plotinfo_cache = []
 
         for dataset in data:
@@ -56,13 +58,16 @@ class PlotInfoBuilder:
         size_behaviour = SizingBehaviour.get_correct_behaviour(config, plotinfo_cache)
 
         # create new object and determine if there are already fitting existing objects
+        # TODO FIXME: Determine this without creating a new PlotInfo object for each
         new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour, size_behaviour)
         existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), plotinfo_cache))
 
         if len(existing_plotinfos) == 0:
             # use the new object
+            log('PlotInfoBuilder_class', f'Created a new PlotInfo object as {new_plotinfo}')
             plotinfo_cache.append(new_plotinfo)
         elif len(existing_plotinfos) == 1:
+            log('PlotInfoBuilder_class', f'Extending existing PlotInfo object with {new_plotinfo}')
             # use an existing object and discard the newly created one
             existing = existing_plotinfos[0]
             existing.x_coords.extend(x_coords)

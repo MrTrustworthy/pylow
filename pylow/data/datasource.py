@@ -4,17 +4,22 @@ import pandas
 from pandas.core.groupby import DataFrameGroupBy
 
 from pylow.data.attributes import Attribute, Dimension
+from pylow.logger import log
 
 
 class Datasource:
+
     def __init__(self, data: pandas.DataFrame) -> None:
         self.data = data
         self._add_noc()
+        log(self, 'Init Datasource')
 
     def add_column(self, name: str, formula: Callable) -> None:
         self.data[name] = formula(self.data)
 
     def _add_noc(self) -> None:
+        """ Adds a default 'number of rows' column so things like counts are possible
+        """
         self.add_column('Number of records', lambda x: 1)
 
     def _guess_types(self) -> None:
@@ -38,6 +43,9 @@ class Datasource:
         return list(set(self.data[col]))
 
     def group_by(self, dimensions: List[Dimension]) -> DataFrameGroupBy:
+        """ Performs a grouping based on all given dimensions and returns the result
+        """
+        log(self, f'grouping data bases on {dimensions}')
         dimension_names = [d.col_name for d in dimensions]
         if len(dimension_names) == 0:
             # If no dimensions are given to group by, create grouping object based on no filter at all
@@ -46,6 +54,9 @@ class Datasource:
 
     @classmethod
     def from_csv(cls, filename: str, options: Optional[dict] = None) -> 'Datasource':
+        """ If given the path to a csv-file, read the file and return a datasource with its contents
+        """
+        log('Datasource_class', f'loading datasource from csv file {filename}')
         if options is None:
             options = {
                 'delimiter': ';',
@@ -57,9 +68,3 @@ class Datasource:
         datasource = cls(data)
         datasource._guess_types()
         return datasource
-
-
-if __name__ == '__main__':
-    ds = Datasource.from_csv('SalesJan2009.csv')
-    ds.add_column('account_age', lambda x: x['Last_Login'] - x['Account_Created'])
-    # print(ds.data.head)

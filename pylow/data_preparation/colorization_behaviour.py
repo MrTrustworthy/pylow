@@ -51,6 +51,8 @@ class ColorizationBehaviour:
         """
         raise NotImplementedError('get_colors() is only available in subclasses of ColorizationBehaviour')
 
+    def __repr__(self):
+        return f'{type(self).__name__}'
 
 class NoColorColorizationBehaviour(ColorizationBehaviour):
     """ Colorization strategy for cases where no color at all is supplied in the configuration
