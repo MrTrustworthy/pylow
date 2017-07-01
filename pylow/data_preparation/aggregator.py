@@ -3,7 +3,9 @@ from itertools import chain
 from typing import Dict, List, Tuple, Union
 
 from numpy import number
+from pandas.core.groupby import DataFrameGroupBy
 
+from data_preparation.plotinfo import PlotInfo
 from pylow.data.attributes import Measure
 from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
@@ -58,31 +60,33 @@ class Aggregator:
         """
         self.ncols = self._calculate_ncols(data)
         self.nrows = len(data) // self.ncols
+        self._update_min_max_values(data, 'x')
+        self._update_min_max_values(data, 'y')
 
+    def _update_min_max_values(self, data: List['PlotInfo'], axis: str) -> None:
         # calculate min and max x_values
-        x_vals = [avp.val for pi in data for avp in pi.x_coords]
-        if len(x_vals) == 0:
+        _min_attr, _max_attr = f'{axis}_min', f'{axis}_max'
+        vals = [avp.val for pi in data for avp in getattr(pi, f'{axis}_coords')]
+        if len(vals) == 0:
             # This happens when there are no x_coords, such as for 0d0m_.... configurations
-            self.x_min, self.x_max = (None, None)
+            setattr(self, _min_attr, None)
+            setattr(self, _max_attr, None)
         else:
-            self.x_min, self.x_max = min(x_vals), max(x_vals)
+            setattr(self, _min_attr, min(vals))
+            setattr(self, _max_attr, max(vals))
 
-        # calculate min and max y_values
-        y_vals = [avp.val for pi in data for avp in pi.y_coords]
-        if len(y_vals) == 0:
-            # This happens when there are no y_coords, such as for ...._0d0m configurations
-            self.y_min, self.y_max = (None, None)
-        else:
-            self.y_min, self.y_max = min(y_vals), max(y_vals)
+        # add some buffer for number varlues so the drawing looks better
+        if isinstance(getattr(self, _min_attr), number):
+            curr_min, curr_max = getattr(self, _min_attr), getattr(self, _max_attr)
+            _range = int((curr_min - curr_max) / 10)
+            setattr(self, _min_attr, curr_min - _range)
+            setattr(self, _max_attr, curr_max + _range)
 
-        # add some buffer so the drawing looks better
-        if isinstance(self.y_min, number):
-            _range = int((self.y_max - self.y_min) / 10)
-            self.y_min, self.y_max = self.y_min - _range, self.y_max + _range
-
-        if isinstance(self.x_min, number):
-            _range = int((self.x_max - self.x_min) / 10)
-            self.x_min, self.x_max = self.x_min - _range, self.x_max + _range
+            # handle cases where there is only one measure and ranges don't make sense
+            if getattr(self, _min_attr) == getattr(self, _max_attr):
+                setattr(self, _min_attr, 0)
+                # since the previous range difference & buffer is 0, add some buffer again
+                setattr(self, _max_attr, curr_max + (curr_max * 0.1))
 
     def _calculate_ncols(self, data: List['PlotInfo']) -> int:
         column_possibilities = []
@@ -93,7 +97,7 @@ class Aggregator:
         return max(ncols, 1)
 
     # prepare data
-    def _get_assigned_data(self, data: Dict[Union[Tuple[str], str], List[Number]]) -> List[List[AVP]]:
+    def _get_assigned_data(self, data: Dict[Tuple[str], Tuple[Number]]) -> List[List[AVP]]:
         out = []
         for key_tuple, val_list in data.items():
             vals = [AVP(a, v) for a, v in zip(self.config.all_attrs, chain(key_tuple, val_list))]
@@ -101,9 +105,9 @@ class Aggregator:
         return out
 
     def _get_prepared_data(self) -> Dict[Tuple[str], Tuple[Number]]:
+        """ Returns a filtered and aggregated view on the data"""
         dimensions, measures = self.config.dimensions, self.config.measures
-        dimension_names = [d.col_name for d in dimensions]
-        grouped_data = self.datasource.data.groupby(dimension_names)
+        grouped_data = self.datasource.group_by(dimensions)
         out = defaultdict(list)  # using defaultdict allows us to just append any measure to the end
         for measure in measures:
             aggregated_data = self._get_measure_data(grouped_data, measure)
@@ -111,10 +115,17 @@ class Aggregator:
                 # for 0d0m-configurations, key_tuple may be a string instead of a tuple -> normalize to tuple
                 if isinstance(key_tuple, str):
                     key_tuple = (key_tuple,)
+                # for 0-Dimension-total configurations, key_tuple may be a bool (thats how panda does it)
+                # FIXME not working currently - need to find a way to deal with a missing
+                # FIXME y- or x-coord on a higher level and adapt here to reflect this
+                if isinstance(key_tuple, bool):
+                    key_tuple = tuple()
                 out[key_tuple].append(value)
         return out
 
-    def _get_measure_data(self, data, measure: Measure) -> Dict[Tuple[str], int]:
+    def _get_measure_data(self, data: DataFrameGroupBy, measure: Measure) -> Dict[Tuple[str], int]:
+        """ Helper for _get_prepared_data()"""
+        # TODO: is the return type maybe Dict[Union[Tuple[str], str, bool], int] ?? bool in case of no aggregation
         grouped_measure = data[measure.col_name]
         aggregated_data = getattr(grouped_measure, measure.aggregation)()  # is a pandas object
         return aggregated_data.to_dict()

@@ -1,8 +1,9 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, List, Any
 
 import pandas
+from pandas.core.groupby import DataFrameGroupBy
 
-from .attributes import Attribute
+from pylow.data.attributes import Attribute, Dimension
 
 
 class Datasource:
@@ -27,22 +28,35 @@ class Datasource:
                 except ValueError:
                     pass
 
-    def get_variations_of(self, column: Union[str, Attribute]):
+    def get_variations_of(self, column: Union[str, Attribute]) -> List[Any]:
+        """Returns all possible values for a given column
+
+        Only makes sense to call this for columns
+        TODO: Must be adapted to work with filtered data
+        """
         col = getattr(column, 'col_name', column)
         return list(set(self.data[col]))
+
+    def group_by(self, dimensions: List[Dimension]) -> DataFrameGroupBy:
+        dimension_names = [d.col_name for d in dimensions]
+        if len(dimension_names) == 0:
+            # If no dimensions are given to group by, create grouping object based on no filter at all
+            return self.data.groupby(lambda _: True)
+        return self.data.groupby(dimension_names)
 
     @classmethod
     def from_csv(cls, filename: str, options: Optional[dict] = None) -> 'Datasource':
         if options is None:
-            options = options = {
+            options = {
                 'delimiter': ';',
                 'quotechar': '"',
                 'escapechar': '\\'
             }
+        assert options is not None
         data = pandas.read_csv(filename, **options)
-        ds = cls(data)
-        ds._guess_types()
-        return ds
+        datasource = cls(data)
+        datasource._guess_types()
+        return datasource
 
 
 if __name__ == '__main__':

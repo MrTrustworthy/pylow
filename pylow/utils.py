@@ -30,6 +30,11 @@ def unique_list(content: List[Any]) -> List[Any]:
 
 
 def reverse_lerp(point: Number, pointlist: List[Number]) -> float:
+    # special case: if there is only one element in the pointlist, just return 1 to avoid division by 0 error
+    # Happens for 1m-only, measure-col-or-size configs such as CONF_0d0m_0d1m_sizeM_colNX_circle
+    if len(pointlist) == 1:
+        return 1
+
     _min, _max = min(pointlist), max(pointlist)
     value_range = _max - _min
     abs_in_range = point - _min

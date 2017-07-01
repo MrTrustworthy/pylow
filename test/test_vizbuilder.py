@@ -51,14 +51,14 @@ def check_html(viz_config, infos) -> None:
     if 'colN' in str(viz_config):
         assert len(set(all_colors)) == 1
     else:
-        assert len(set(all_colors)) > 1
+        assert len(set(all_colors)) >= 1
 
     # check for sizes
     all_sizes = sum([d['_size'] for d in data], [])
     if 'sizeN' in str(viz_config):
         assert len(set(all_sizes)) == 1
     else:
-        assert len(set(all_sizes)) > 1
+        assert len(set(all_sizes)) >= 1
 
     # check for glyph amounts
     try:

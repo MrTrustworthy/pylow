@@ -81,7 +81,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
     """ Contains the lists of possible options for a plot and combines them in all possible ways
     """
     col_dim_combs = [[], [Dimension('Category')], [Dimension('Category'), Dimension('Region')]]
-    row_dim_combs = [[Dimension('Ship Mode')]]
+    row_dim_combs = [[], [Dimension('Ship Mode')]]
     col_measure_combs = [[]]
     row_measure_combs = [[Measure('Quantity')]]
     colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]

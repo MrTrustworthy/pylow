@@ -1,7 +1,23 @@
+from functools import reduce
+
 import pytest
 
 from pylow.data import Datasource
-from .testutils import TEST_FILE
+from pylow.data.attributes import Dimension
+from .testutils import TEST_FILE, DATASOURCE
+
+
+def test_datasource_groupby():
+    dimensions = [Dimension('Postal Code'), Dimension('Category'), Dimension('State'), Dimension('Ship Mode')]
+    for i in range(len(dimensions)):
+        to_group_by = dimensions[:i]
+        grouped = DATASOURCE.group_by(to_group_by)
+        variations = list(DATASOURCE.get_variations_of(d.col_name) for d in to_group_by)
+        variation_lengths = list(len(variation) for variation in variations)
+        expected_min = sum(variation_lengths)
+        # This is the max since the product of the amount of all variations is the upper limit for combinations
+        expected_max = reduce(lambda x, y: x * y, variation_lengths, 1)
+        assert expected_min <= len(grouped) <= expected_max
 
 
 def test_datasource_from_file_types():

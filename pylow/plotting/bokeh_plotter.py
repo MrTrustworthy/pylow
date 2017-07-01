@@ -91,7 +91,7 @@ class Plotter:
         # Labels on the left
         if self.aggregator.is_in_first_column(plot_info):
             # TODO can we use plotinfo.example_val... here?
-            text = plot_info.y_seps[-1].val.replace(' ', '\n')  # FIXME inserting \n does nothing, Issue #2
+            text = plot_info.get_axis_label('y')
             label = Label(x=0, y=options['plot_height'] // 2, x_units='screen',
                           y_units='screen', text=text, render_mode='css', text_align='right')
             plot.add_layout(label)
@@ -100,7 +100,7 @@ class Plotter:
         # if there are no x_seps (aka only one column), there is no need to draw additional labels
         if self.aggregator.is_in_first_row(plot_info) and len(plot_info.x_seps) > 0:
             # TODO can we use plotinfo.example_val... here?
-            text = plot_info.x_seps[-1].val
+            text = plot_info.get_axis_label('x')
             label = Label(x=options['plot_width'] // 2, y=options['plot_height'], x_units='screen',
                           y_units='screen', text=text, render_mode='css', text_align='center')
             plot.add_layout(label)
@@ -133,8 +133,7 @@ class Plotter:
 
         # TODO FIXME check based on dimension/measure instead of IS_STR
         values = unique_list([avp.val for avp in getattr(plot_info, f'{axis}_coords')])
-
-        if len(values) == 0:  # FIXME #25
+        if len(values) == 0:
             # handle the case of 0d0m-configs
             values = [plot_info.get_example_avp_for_axis(axis).val]
 
@@ -142,6 +141,8 @@ class Plotter:
             return FactorRange(*values)
         else:
             _min, _max = getattr(self.aggregator, f'{axis}_min'), getattr(self.aggregator, f'{axis}_max')
+            if _min == _max:
+                _min = 0
             return Range1d(_min, _max)
 
     def _get_axis(self, data: PlotInfo, axis: str) -> Tuple[Ticker, Axis]:

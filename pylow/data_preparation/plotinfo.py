@@ -65,6 +65,16 @@ class PlotInfo:
     def would_be_in_same_plot(self, other: 'PlotInfo') -> bool:
         return self.x_seps == other.x_seps and self.y_seps == other.y_seps
 
+    def get_axis_label(self, x_or_y: str) -> str:
+        """ Returns the 'last' x or y dimension value this plot is split by"""
+        # FIXME inserting \n does nothing, display output is wrong, see Issue #2
+        attrs = getattr(self, f'{x_or_y}_seps')
+        if len(attrs) == 0:
+            return ''
+        else:
+            return attrs[-1].val
+
+
     def get_coord_values(self, x_or_y: str) -> List[Any]:
         """ Will return all values for a given coords axis
         If the axis is empty, will return a default AVP
@@ -91,7 +101,6 @@ class PlotInfo:
         """ Returns the data that is supposed to be drawn in a fitting format
         """
         x, y, color, size = self.column_names
-        # DATA
         data = {
             x: self.get_coord_values('x'),  # default value for 0d0m_xd1m configs
             y: self.get_coord_values('y'),  # default value for xd1m_0d0m configs
