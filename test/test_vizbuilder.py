@@ -49,8 +49,6 @@ def check_html(viz_config, infos) -> None:
 
     # check for colors
     all_colors: List[str] = sum([d['_color'] for d in data], [])  # type: ignore
-    import pdb;
-    pdb.set_trace()
     if 'colN' in str(viz_config):
         assert len(set(all_colors)) == 1
     else:
