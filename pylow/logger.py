@@ -4,13 +4,11 @@ import os
 _base_path = os.path.dirname(os.path.abspath(__file__))
 _path = os.path.join(_base_path, '..', 'app.log')
 
-_log_options = {
-    'filename': _path,
-    'filemode': 'w',
-    'level': logging.DEBUG
-}
-
-logging.basicConfig(**_log_options)
+logging.basicConfig(
+    filename=_path,
+    filemode='w',
+    level=logging.DEBUG
+)
 
 
 def log(origin, message, *, logger='main', level='debug'):

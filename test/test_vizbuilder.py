@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from bs4 import BeautifulSoup
 
@@ -44,27 +45,30 @@ def check_html(viz_config, infos) -> None:
     assert len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']
 
     column_datasources = [ref for ref in references if ref['type'] == 'ColumnDataSource']
-    data = [ref['attributes']['data'] for ref in column_datasources]  # type: List[Dict[str, int]]
+    data = [ref['attributes']['data'] for ref in column_datasources]
 
     # check for colors
-    all_colors = sum([d['_color'] for d in data], [])
+    all_colors: List[str] = sum([d['_color'] for d in data], [])  # type: ignore
+    import pdb;
+    pdb.set_trace()
     if 'colN' in str(viz_config):
         assert len(set(all_colors)) == 1
     else:
         assert len(set(all_colors)) >= 1
 
     # check for sizes
-    all_sizes = sum([d['_size'] for d in data], [])
+    all_sizes: List[int] = sum([d['_size'] for d in data], [])  # type: ignore
     if 'sizeN' in str(viz_config):
         assert len(set(all_sizes)) == 1
     else:
         assert len(set(all_sizes)) >= 1
 
     # check for glyph amounts
+    colname: str = ''
     try:
         colname = viz_config.last_column.col_name
     except NoSuchAttributeException:
-        colname = ''
+        pass
     glyph_amounts = [len(d[colname]) for d in data]
     # since not all plots will contain all dimension values, the glyph amount can be less than the max amount
     assert max(glyph_amounts) <= infos['glyphs_in_plot_amount']

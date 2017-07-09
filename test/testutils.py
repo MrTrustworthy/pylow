@@ -8,7 +8,7 @@ from pylow.data import Datasource
 TEMP_FOLDER = pathlib.Path('test/temp')
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root
 TEST_FILE = TESTDATA_PATH / 'testdata.csv'
-DATASOURCE = Datasource.from_csv(TEST_FILE.absolute())
+DATASOURCE = Datasource.from_csv(str(TEST_FILE.absolute()))
 
 
 def save_plot_temp(plot, name):

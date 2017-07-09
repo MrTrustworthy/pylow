@@ -1,14 +1,14 @@
 from collections import namedtuple
 from enum import unique, Enum
-from typing import List, Union, Any
+from typing import List, Union, TypeVar
 
 Number = Union[int, float]
-
+T = TypeVar('T')
 ColumnNameCollection = namedtuple('ColumnNameCollection', ['x', 'y', 'color', 'size'])
 
 
 def make_unique_string_list(content: List[str]):
-    s = set()
+    s: set = set()
     new = []
     for word in content:
         i = 0
@@ -20,9 +20,9 @@ def make_unique_string_list(content: List[str]):
     return new
 
 
-def unique_list(content: List[Any]) -> List[Any]:
+def unique_list(content: List[T]) -> List[T]:
     """ Can't rely on sets to preserve order """
-    out = []
+    out: List[T] = []
     for c in content:
         if c not in out:
             out.append(c)
@@ -36,9 +36,10 @@ def reverse_lerp(point: Number, pointlist: List[Number]) -> float:
         return 1
 
     _min, _max = min(pointlist), max(pointlist)
-    value_range = _max - _min
-    abs_in_range = point - _min
-    relative_in_range = (abs_in_range / value_range)
+    # There is currently an issue with mypy type checks for unions
+    value_range = _max - _min  # type: ignore
+    abs_in_range = point - _min  # type: ignore
+    relative_in_range = float(abs_in_range / value_range)
     return relative_in_range
 
 

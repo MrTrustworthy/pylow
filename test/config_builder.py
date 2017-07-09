@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from functools import reduce
 from itertools import product
-from typing import Generator, List, Tuple
+from typing import Generator, List, Tuple, Dict, Any, Union, Iterable
 
 import pytest
 
@@ -11,16 +11,23 @@ from pylow.data.vizconfig import VizConfig
 from pylow.utils import MarkType
 from .testutils import DATASOURCE
 
+ConfigInfo = Dict[str, Any]
+Config = Tuple[VizConfig, ConfigInfo]
+ConfigAttribute = Union[List[Attribute], MarkType]
 
-def get_configs(filtering=None) -> List[VizConfig]:
-    all_configs = _build_configs()
+
+def get_configs(filtering=None) -> List[Config]:
+    all_configs = list(_build_configs())
     if filtering is not None:
-        all_configs = filter(lambda vc: re.search(filtering, str(vc[0])), all_configs)
+        def filter_func(vc: Config) -> bool:
+            return bool(re.search(filtering, str(vc[0])))
+
+        all_configs = list(filter(filter_func, all_configs))
 
     return list(all_configs)
 
 
-def _build_configs() -> Generator[VizConfig, None, None]:
+def _build_configs() -> Generator[Config, None, None]:
     """ Dynamically create a set of VizConfig's for testing
     """
     for conf_dict in _build_config_dicts():
@@ -44,7 +51,7 @@ def _determine_glyphs_in_plot_amount(vizconfig: VizConfig) -> int:
         relevant_attributes.add(vizconfig.last_column)
     if len(vizconfig.rows) > 0:
         relevant_attributes.add(vizconfig.last_row)
-    relevant_dimensions = VizConfig.find_attrs(relevant_attributes, Dimension)
+    relevant_dimensions: List[Dimension] = VizConfig.find_attrs(relevant_attributes, Dimension)
     variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
     glyph_amount = reduce(lambda old, new: old * new, map(len, variations), 1)
     return glyph_amount
@@ -57,32 +64,32 @@ def _determine_plot_amount(vizconfig: VizConfig) -> int:
     """
 
     relevant_attributes = vizconfig.previous_columns + vizconfig.previous_rows
-    relevant_dimensions = VizConfig.find_attrs(relevant_attributes, Dimension)
+    relevant_dimensions: List[Dimension] = VizConfig.find_attrs(relevant_attributes, Dimension)
     variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
     plot_amount = reduce(lambda old, new: old * new, map(len, variations), 1)
     return plot_amount
 
 
-def _build_config_dicts() -> Generator[dict, None, None]:
+def _build_config_dicts() -> Generator[Dict[str, List[List[ConfigAttribute]]], None, None]:
     """ Goes through all possible combinations of configuration options and returns them all
     """
     attribute_order, permutations = _get_possible_permutations()
     for permuation in permutations:
-        config_dict = defaultdict(list)
+        config_dict: Dict[str, List[ConfigAttribute]] = defaultdict(list)
         for attr, options in zip(attribute_order, permuation):
-            if attr in 'columns' or attr in 'rows':
-                config_dict[attr] += options
+            if attr in ('columns', 'rows'):
+                config_dict[attr] += options  # type: ignore
             else:
-                config_dict[attr] = options
-        yield dict(config_dict)
+                config_dict[attr] = options  # type: ignore
+        yield dict(config_dict)  # type: ignore
 
 
-def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
+def _get_possible_permutations() -> Tuple[List[str], List[Iterable[ConfigAttribute]]]:
     """ Contains the lists of possible options for a plot and combines them in all possible ways
     """
     col_dim_combs = [[], [Dimension('Category')], [Dimension('Category'), Dimension('Region')]]
     row_dim_combs = [[], [Dimension('Ship Mode')]]
-    col_measure_combs = [[]]
+    col_measure_combs: List[List[Attribute]] = [[]]
     row_measure_combs = [[Measure('Quantity')]]
     colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
     sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('Segment'), Measure('Profit')]
@@ -90,8 +97,9 @@ def _get_possible_permutations() -> Tuple[List[str], List[List[Attribute]]]:
 
     # generate permutations
     attribute_order = ['columns', 'rows', 'columns', 'rows', 'color', 'size', 'mark_type']
-    permuations = product(col_dim_combs, row_dim_combs, col_measure_combs, row_measure_combs, colors, sizes, marks)
-    return attribute_order, permuations
+    segments = [col_dim_combs, row_dim_combs, col_measure_combs, row_measure_combs, colors, sizes, marks]
+    permuations = product(*segments)  # type:ignore
+    return attribute_order, list(permuations)
 
 
 # Use regex to limit testing to the configurations currently relevant while developing

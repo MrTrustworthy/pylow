@@ -38,5 +38,3 @@ def to_rgb(color: str) -> Tuple[int, int, int]:
 
 def to_valid_rgb_range(color: Number) -> int:
     return int(max(min(color, 255), 0))
-
-

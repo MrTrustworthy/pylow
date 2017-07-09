@@ -1,11 +1,16 @@
 from itertools import chain
-from typing import List, Any, Union
+from typing import List, Any, Union, TYPE_CHECKING
 
 from pylow.data.attributes import Measure, Dimension
 from pylow.data_preparation.avp import AVP
 from pylow.utils import reverse_lerp
 
 Number = Union[int, float]
+
+# static type analysis
+if TYPE_CHECKING:
+    from pylow.data.vizconfig import VizConfig
+    from pylow.data_preparation.plotinfo import PlotInfo
 
 
 class SizingBehaviour:
@@ -50,6 +55,7 @@ class SizingBehaviour:
 
     def __repr__(self):
         return f'{type(self).__name__}'
+
 
 class NoColorSizingBehaviour(SizingBehaviour):
     """ Sizing strategy for cases where no size at all is supplied in the configuration

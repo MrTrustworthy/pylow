@@ -20,7 +20,7 @@ class PlotInfo:
             additional_data: List[AVP],
             colorization_behaviour: ColorizationBehaviour,
             sizing_behaviour: SizingBehaviour
-    ):
+    ) -> None:
         # those two should be the same, or at least one is non-existent
         assert len(x_coords) == len(y_coords) or min(len(x_coords), len(y_coords)) == 0
 
@@ -73,7 +73,6 @@ class PlotInfo:
             return ''
         else:
             return attrs[-1].val
-
 
     def get_coord_values(self, x_or_y: str) -> List[Any]:
         """ Will return all values for a given coords axis

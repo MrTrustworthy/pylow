@@ -8,7 +8,9 @@ class Attribute:
     def __repr__(self) -> str:
         return f'<plot_config.{type(self).__name__}: {self.col_name}>'
 
-    def __eq__(self, other: 'Attribute') -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Attribute):
+            return NotImplemented
         return type(self).__name__ == type(other).__name__ and self.col_name == other.col_name
 
     def __hash__(self) -> int:

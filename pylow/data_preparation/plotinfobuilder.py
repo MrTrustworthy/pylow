@@ -17,7 +17,7 @@ class PlotInfoBuilder:
         Will take a list of AVP-Lists and create a list of PlotInfo objects from them
         """
         log('PlotInfoBuilder_class', f'Creating all plot infos for {len(data)} rows of data [config is {config}]')
-        plotinfo_cache = []
+        plotinfo_cache: List[PlotInfo] = []
 
         for dataset in data:
             cls._make_plot_info(dataset, config, plotinfo_cache)
@@ -33,8 +33,8 @@ class PlotInfoBuilder:
         Will not return an object but rather put it into the plotinfo_cache
         """
         find_index = config.all_attrs.index
-        x_coords = []  # default value, in case no values are there
-        y_coords = []  # default value, in case no values are there
+        x_coords: List[AVP] = []  # default value, in case no values are there
+        y_coords: List[AVP] = []  # default value, in case no values are there
 
         try:
             x_coords = [plot_data[find_index(config.last_column)]]

@@ -1,10 +1,15 @@
 from itertools import chain, cycle
-from typing import List, Any, Generator
+from typing import List, Any, Generator, TYPE_CHECKING
 
 from pylow.data.attributes import Measure, Dimension
 from pylow.data_preparation.avp import AVP
 from pylow.data_preparation.colorizer import DEFAULT_COLOR, ALL_COLORS, adjust_brightness
 from pylow.utils import reverse_lerp
+
+# static type analysis
+if TYPE_CHECKING:
+    from pylow.data.vizconfig import VizConfig
+    from pylow.data_preparation.plotinfo import PlotInfo
 
 
 class ColorizationBehaviour:
@@ -53,6 +58,7 @@ class ColorizationBehaviour:
 
     def __repr__(self):
         return f'{type(self).__name__}'
+
 
 class NoColorColorizationBehaviour(ColorizationBehaviour):
     """ Colorization strategy for cases where no color at all is supplied in the configuration

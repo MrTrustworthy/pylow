@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import chain
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union, Iterable
 
 from numpy import number
 from pandas.core.groupby import DataFrameGroupBy
@@ -23,7 +23,8 @@ class Aggregator:
     that is useable by the Plotters (PlotInfo objects). It also maintains state information about the
     plots that is relevant for laying out the plot (number of columns and rows, min/max values, etc)
     """
-    def __init__(self, datasource: Datasource, config: VizConfig):
+
+    def __init__(self, datasource: Datasource, config: VizConfig) -> None:
         log(self, f'Initializing aggregator with {datasource} and {config}')
         self.datasource = datasource
         self.config = config
@@ -106,18 +107,18 @@ class Aggregator:
         return max(ncols, 1)
 
     # prepare data
-    def _get_assigned_data(self, data: Dict[Tuple[str], Tuple[Number]]) -> List[List[AVP]]:
+    def _get_assigned_data(self, data: Dict[Iterable[str], List[Number]]) -> List[List[AVP]]:
         out = []
         for key_tuple, val_list in data.items():
             vals = [AVP(a, v) for a, v in zip(self.config.all_attrs, chain(key_tuple, val_list))]
             out.append(vals)
         return out
 
-    def _get_prepared_data(self) -> Dict[Tuple[str], Tuple[Number]]:
+    def _get_prepared_data(self) -> Dict[Iterable[str], List[Number]]:
         """ Returns a filtered and aggregated view on the data"""
         dimensions, measures = self.config.dimensions, self.config.measures
         grouped_data = self.datasource.group_by(dimensions)
-        out = defaultdict(list)  # using defaultdict allows us to just append any measure to the end
+        out: Dict[Iterable[str], List[Number]] = defaultdict(list)  # using defaultdict to just append any measure
         for measure in measures:
             aggregated_data = self._get_measure_data(grouped_data, measure)
             for key_tuple, value in aggregated_data.items():
@@ -132,7 +133,7 @@ class Aggregator:
                 out[key_tuple].append(value)
         return out
 
-    def _get_measure_data(self, data: DataFrameGroupBy, measure: Measure) -> Dict[Tuple[str], int]:
+    def _get_measure_data(self, data: DataFrameGroupBy, measure: Measure) -> Dict[Iterable[str], int]:
         """ Helper for _get_prepared_data()"""
         # TODO: is the return type maybe Dict[Union[Tuple[str], str, bool], int] ?? bool in case of no aggregation
         grouped_measure = data[measure.col_name]

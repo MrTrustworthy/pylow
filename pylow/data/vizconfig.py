@@ -1,12 +1,12 @@
 from itertools import chain
-from typing import List, Union, TypeVar, Optional
+from typing import List, TypeVar, Optional, Iterable, Union, Type
 
 from pylow.data.attributes import Attribute, Dimension, Measure
 from pylow.logger import log
 from pylow.utils import unique_list, MarkType
 
 Number = Union[int, float]
-AttributeSubclass = TypeVar('AttributeSubclass', Dimension, Measure)
+T = TypeVar('T')
 
 
 class NoSuchAttributeException(Exception):
@@ -122,8 +122,8 @@ class VizConfig:
         return self.rows[-1]
 
     @staticmethod
-    def find_attrs(iterable: List[Attribute], attr_class: AttributeSubclass) -> List[AttributeSubclass]:
-        return list(filter(lambda elem: isinstance(elem, attr_class), iterable))
+    def find_attrs(iterable: Iterable[Attribute], attr_class: Type[T]) -> List[T]:
+        return [attr for attr in iterable if isinstance(attr, attr_class)]
 
     def __repr__(self) -> str:
         """ Returns a String describing the config, such as CONF_1d0m_1d1m_sizeDX_colDX_circle

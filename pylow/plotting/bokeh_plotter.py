@@ -1,5 +1,5 @@
 from math import pi
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, List
 
 from bokeh.layouts import Column as BokehColumn
 from bokeh.layouts import gridplot
@@ -21,9 +21,9 @@ from pylow.utils import unique_list
 
 
 class Plotter:
-    def __init__(self, datasource: Datasource, config: VizConfig):
+    def __init__(self, datasource: Datasource, config: VizConfig) -> None:
         self.aggregator = Aggregator(datasource, config)
-        self.plots = []
+        self.plots: List[Plot] = []
         log(self, 'Initializing Plotter')
 
     def create_viz(self) -> None:

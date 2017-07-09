@@ -11,6 +11,7 @@ mypy==0.511
 numpy==1.12.1
 packaging==16.8
 pandas==0.20.1
+pep8==1.7.0
 py==1.4.33
 pyparsing==2.2.0
 pytest==3.0.7
