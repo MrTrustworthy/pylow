@@ -53,6 +53,10 @@ class Aggregator:
         prepared = self._get_assigned_data(raw_data)
         final_data = PlotInfoBuilder.create_all_plotinfos(prepared, self.config)
         self._update_data_attributes(final_data)
+
+        log(self, f'Aggregator reports following bounds: ncols:{self.ncols}, nrows:{self.nrows}, x_min:{self.x_min}, \\'
+                  f'x_max:{self.x_max}, y_min:{self.y_min}, y_max:{self.y_max}')
+
         self.data = final_data
 
     # get meta-info
@@ -83,7 +87,7 @@ class Aggregator:
         # add some buffer for number varlues so the drawing looks better
         if isinstance(getattr(self, _min_attr), number):
             curr_min, curr_max = getattr(self, _min_attr), getattr(self, _max_attr)
-            _range = int((curr_min - curr_max) / 10)
+            _range = int(abs(curr_min - curr_max) / 10)
             setattr(self, _min_attr, curr_min - _range)
             setattr(self, _max_attr, curr_max + _range)
 
