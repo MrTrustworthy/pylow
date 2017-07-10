@@ -1,12 +1,12 @@
 from itertools import chain
 from typing import List
 
-from pylow.data.vizconfig import VizConfig, NoSuchAttributeException
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
-from pylow.data_preparation.plotinfo import PlotInfo
-from pylow.data_preparation.sizing_behaviour import SizingBehaviour
-from pylow.logger import log
+from datapylot.data.vizconfig import VizConfig, NoSuchAttributeException
+from datapylot.data_preparation.avp import AVP
+from datapylot.data_preparation.colorization_behaviour import ColorizationBehaviour
+from datapylot.data_preparation.plotinfo import PlotInfo
+from datapylot.data_preparation.sizing_behaviour import SizingBehaviour
+from datapylot.logger import log
 
 
 class PlotInfoBuilder:

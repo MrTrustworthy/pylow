@@ -3,7 +3,7 @@ import warnings
 
 from bokeh.io import save
 
-from pylow.data import Datasource
+from datapylot.data import Datasource
 
 TEMP_FOLDER = pathlib.Path('test/temp')
 TESTDATA_PATH = pathlib.Path('test/data')  # as seen from project root

@@ -10,14 +10,14 @@ from bokeh.models.axes import Axis
 from bokeh.models.ranges import Range
 from bokeh.models.tickers import Ticker
 
-from pylow.data.datasource import Datasource
-from pylow.data.vizconfig import VizConfig
-from pylow.data_preparation.aggregator import Aggregator
-from pylow.data_preparation.plotinfo import PlotInfo
-from pylow.logger import log
-from pylow.plotting.glyph_factory import create_glyph
-from pylow.plotting.tooltip_factory import generate_tooltip
-from pylow.utils import unique_list
+from datapylot.data.datasource import Datasource
+from datapylot.data.vizconfig import VizConfig
+from datapylot.data_preparation.aggregator import Aggregator
+from datapylot.data_preparation.plotinfo import PlotInfo
+from datapylot.logger import log
+from datapylot.plotting.glyph_factory import create_glyph
+from datapylot.plotting.tooltip_factory import generate_tooltip
+from datapylot.utils import unique_list
 
 
 class Plotter:

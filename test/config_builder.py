@@ -6,9 +6,9 @@ from typing import Generator, List, Tuple, Dict, Any, Union, Iterable
 
 import pytest
 
-from pylow.data.attributes import Dimension, Measure, Attribute
-from pylow.data.vizconfig import VizConfig
-from pylow.utils import MarkType
+from datapylot.data.attributes import Dimension, Measure, Attribute
+from datapylot.data.vizconfig import VizConfig
+from datapylot.utils import MarkType
 from .testutils import DATASOURCE
 
 ConfigInfo = Dict[str, Any]
@@ -105,7 +105,7 @@ def _get_possible_permutations() -> Tuple[List[str], List[Iterable[ConfigAttribu
 
 # Use regex to limit testing to the configurations currently relevant while developing
 # TODO can we make this depend on a pytest argument? then we could set up CI to test more specific stuff
-configs = get_configs()
+configs = get_configs('fdhdfgh')
 
 # Pytest parameterized decorator to iterate over all possible configurations in testing
 # This object is the main export of this test class and used in other testing code

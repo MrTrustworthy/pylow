@@ -9,5 +9,5 @@ __pycache__/
 .venv
 .eggs/
 test/temp/*.html
-Tapylow.egg-info
+DataPylot.egg-info
 app.log

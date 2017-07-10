@@ -5,13 +5,13 @@ from typing import Dict, List, Union, Iterable, Any
 from numpy import number
 from pandas.core.groupby import DataFrameGroupBy
 
-from pylow.data.attributes import Measure, Attribute
-from pylow.data.datasource import Datasource
-from pylow.data.vizconfig import VizConfig
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.plotinfo import PlotInfo
-from pylow.data_preparation.plotinfobuilder import PlotInfoBuilder
-from pylow.logger import log
+from datapylot.data.attributes import Measure, Attribute
+from datapylot.data.datasource import Datasource
+from datapylot.data.vizconfig import VizConfig
+from datapylot.data_preparation.avp import AVP
+from datapylot.data_preparation.plotinfo import PlotInfo
+from datapylot.data_preparation.plotinfobuilder import PlotInfoBuilder
+from datapylot.logger import log
 
 Number = Union[int, float]
 

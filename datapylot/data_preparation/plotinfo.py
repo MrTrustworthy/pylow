@@ -1,11 +1,11 @@
 from itertools import chain
 from typing import Dict, List, Any
 
-from pylow.data.attributes import Attribute
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.colorization_behaviour import ColorizationBehaviour
-from pylow.data_preparation.sizing_behaviour import SizingBehaviour
-from pylow.utils import ColumnNameCollection
+from datapylot.data.attributes import Attribute
+from datapylot.data_preparation.avp import AVP
+from datapylot.data_preparation.colorization_behaviour import ColorizationBehaviour
+from datapylot.data_preparation.sizing_behaviour import SizingBehaviour
+from datapylot.utils import ColumnNameCollection
 
 DEFAULT_AVP = AVP(Attribute(''), '')
 

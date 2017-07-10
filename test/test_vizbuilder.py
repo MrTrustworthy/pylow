@@ -3,9 +3,9 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
-from pylow.data.vizconfig import NoSuchAttributeException
-from pylow.data_preparation.aggregator import Aggregator
-from pylow.plotting import Plotter
+from datapylot.data.vizconfig import NoSuchAttributeException
+from datapylot.data_preparation.aggregator import Aggregator
+from datapylot.plotting import Plotter
 from .config_builder import CONFIG_ROTATE
 from .testutils import DATASOURCE, save_plot_temp, get_plot_temp
 

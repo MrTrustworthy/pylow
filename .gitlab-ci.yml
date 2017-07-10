@@ -13,4 +13,4 @@ all_tests:
     - pip install -r requirements.txt
     - python -m pytest
     - python -m mypy test/test_vizbuilder.py
-    - python -m pep8 pylow
+    - python -m pep8 datapylot

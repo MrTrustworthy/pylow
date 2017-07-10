@@ -1,10 +1,10 @@
 import pytest
 
-from pylow.data import VizConfig, Datasource
-from pylow.data.attributes import Dimension, Measure
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.colorizer import adjust_brightness
-from pylow.plotting import Plotter
+from datapylot.data import VizConfig, Datasource
+from datapylot.data.attributes import Dimension, Measure
+from datapylot.data_preparation.avp import AVP
+from datapylot.data_preparation.colorizer import adjust_brightness
+from datapylot.plotting import Plotter
 from .testutils import TEST_FILE
 
 

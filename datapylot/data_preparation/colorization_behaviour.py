@@ -1,15 +1,15 @@
 from itertools import chain, cycle
 from typing import List, Any, Generator, TYPE_CHECKING
 
-from pylow.data.attributes import Measure, Dimension
-from pylow.data_preparation.avp import AVP
-from pylow.data_preparation.colorizer import DEFAULT_COLOR, ALL_COLORS, adjust_brightness
-from pylow.utils import reverse_lerp
+from datapylot.data.attributes import Measure, Dimension
+from datapylot.data_preparation.avp import AVP
+from datapylot.data_preparation.colorizer import DEFAULT_COLOR, ALL_COLORS, adjust_brightness
+from datapylot.utils import reverse_lerp
 
 # static type analysis
 if TYPE_CHECKING:
-    from pylow.data.vizconfig import VizConfig
-    from pylow.data_preparation.plotinfo import PlotInfo
+    from datapylot.data.vizconfig import VizConfig
+    from datapylot.data_preparation.plotinfo import PlotInfo
 
 
 class ColorizationBehaviour:

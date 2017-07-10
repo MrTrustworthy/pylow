@@ -2,8 +2,8 @@ from functools import reduce
 
 import pytest
 
-from pylow.data import Datasource
-from pylow.data.attributes import Dimension
+from datapylot.data import Datasource
+from datapylot.data.attributes import Dimension
 from .testutils import TEST_FILE, DATASOURCE
 
 

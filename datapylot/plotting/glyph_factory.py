@@ -1,8 +1,8 @@
 from bokeh.core.properties import field
 from bokeh.models import Glyph, VBar, Circle
 
-from pylow.extensions.flexline import FlexLine
-from pylow.utils import MarkType, ColumnNameCollection
+from datapylot.extensions.flexline import FlexLine
+from datapylot.utils import MarkType, ColumnNameCollection
 
 
 def create_glyph(mark_type: MarkType, col_names: ColumnNameCollection) -> Glyph:

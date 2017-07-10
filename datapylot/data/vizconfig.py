@@ -1,9 +1,9 @@
 from itertools import chain
 from typing import List, TypeVar, Optional, Iterable, Union, Type
 
-from pylow.data.attributes import Attribute, Dimension, Measure
-from pylow.logger import log
-from pylow.utils import unique_list, MarkType
+from datapylot.data.attributes import Attribute, Dimension, Measure
+from datapylot.logger import log
+from datapylot.utils import unique_list, MarkType
 
 Number = Union[int, float]
 T = TypeVar('T')

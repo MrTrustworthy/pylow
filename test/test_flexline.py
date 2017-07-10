@@ -1,8 +1,8 @@
 import pytest
 from bokeh.models import ColumnDataSource, Plot, Range1d, LinearAxis
 
-from pylow.data_preparation import colorizer
-from pylow.extensions.flexline import FlexLine
+from datapylot.data_preparation import colorizer
+from datapylot.extensions.flexline import FlexLine
 from .testutils import save_plot_temp
 
 

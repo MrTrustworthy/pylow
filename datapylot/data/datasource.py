@@ -3,8 +3,8 @@ from typing import Callable, Optional, Union, List, Any
 import pandas
 from pandas.core.groupby import DataFrameGroupBy
 
-from pylow.data.attributes import Attribute, Dimension
-from pylow.logger import log
+from datapylot.data.attributes import Attribute, Dimension
+from datapylot.logger import log
 
 
 class Datasource:

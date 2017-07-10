@@ -1,16 +1,16 @@
 from itertools import chain
 from typing import List, Any, Union, TYPE_CHECKING
 
-from pylow.data.attributes import Measure, Dimension
-from pylow.data_preparation.avp import AVP
-from pylow.utils import reverse_lerp
+from datapylot.data.attributes import Measure, Dimension
+from datapylot.data_preparation.avp import AVP
+from datapylot.utils import reverse_lerp
 
 Number = Union[int, float]
 
 # static type analysis
 if TYPE_CHECKING:
-    from pylow.data.vizconfig import VizConfig
-    from pylow.data_preparation.plotinfo import PlotInfo
+    from datapylot.data.vizconfig import VizConfig
+    from datapylot.data_preparation.plotinfo import PlotInfo
 
 
 class SizingBehaviour:

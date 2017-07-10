@@ -1,5 +1,4 @@
-from pylow.data.vizconfig import VizConfig
-from pylow.data_preparation.colorization_behaviour import *
+from datapylot.data_preparation.colorization_behaviour import *
 
 
 def test_colorization_behaviour_selection():

@@ -2,7 +2,7 @@ from itertools import chain
 
 from bokeh.models import HoverTool, GlyphRenderer
 
-from pylow.data_preparation.plotinfo import PlotInfo
+from datapylot.data_preparation.plotinfo import PlotInfo
 
 
 def generate_tooltip(renderer: GlyphRenderer, plot_info: PlotInfo) -> HoverTool:
