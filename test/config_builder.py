@@ -79,6 +79,7 @@ def _build_config_dicts() -> Generator[Dict[str, List[List[ConfigAttribute]]], N
         config_dict: Dict[str, List[ConfigAttribute]] = defaultdict(list)
         for attr, options in zip(attribute_order, permuation):
             if attr in ('columns', 'rows'):
+                # dimensions before measures, then append measures
                 config_dict[attr] += options  # type: ignore
             else:
                 config_dict[attr] = options  # type: ignore
@@ -89,9 +90,9 @@ def _get_possible_permutations() -> Tuple[List[str], List[Iterable[ConfigAttribu
     """ Contains the lists of possible options for a plot and combines them in all possible ways
     """
     col_dim_combs = [[], [Dimension('Category')], [Dimension('Category'), Dimension('Region')]]
-    row_dim_combs = [[], [Dimension('Ship Mode')]]
-    col_measure_combs: List[List[Attribute]] = [[]]
-    row_measure_combs = [[Measure('Quantity')]]
+    row_dim_combs = [[], [Dimension('Ship Mode')], [Dimension('Ship Mode'), Dimension('Region')]]
+    col_measure_combs = [[], [Measure('Quantity')]]
+    row_measure_combs = [[], [Measure('Quantity')]]
     colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
     sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('Segment'), Measure('Profit')]
     marks = [MarkType.CIRCLE]

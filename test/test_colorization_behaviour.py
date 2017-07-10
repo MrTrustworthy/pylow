@@ -1,5 +1,10 @@
+from datapylot.data.attributes import Dimension, Measure
 from datapylot.data.vizconfig import VizConfig
-from datapylot.data_preparation.colorization_behaviour import *
+from datapylot.data_preparation.colorization_behaviour import (ColorizationBehaviour,
+                                                               NoColorColorizationBehaviour,
+                                                               ExistingDimensionColorizationBehaviour,
+                                                               NewDimensionColorizationBehaviour,
+                                                               MeasureColorizationBehaviour)
 
 
 def test_colorization_behaviour_selection():
@@ -32,7 +37,7 @@ def test_colorization_behaviour_selection():
     configs = [no_color, d_existing_color, m_existing_color, d_non_existing_color, m_non_existing_color]
     vizconfigs = [VizConfig.from_dict(d) for d in configs]
     classes = [NoColorColorizationBehaviour, ExistingDimensionColorizationBehaviour,
-               MeasureColorizationBehaviour, NewDimensionColorizationBehaviour, MeasureColorizationBehaviour]
+               MeasureColorizationBehaviour, NewDimensionColorizationBehaviour]
 
     # check that the colorization behaviour dispatch returns the correct classes
     for conf, _class in zip(vizconfigs, classes):
