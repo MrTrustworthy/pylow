@@ -114,12 +114,13 @@ class MeasureSizingBehaviour(SizingBehaviour):
     def get_sizes(self, plot_info: 'PlotInfo') -> List['AVP']:
         """ Find all possible values that are in any plot of the screen
         """
-        # FIXME Not yet working for MX-Configs!
         conf_size = self.vizconfig.size
         variations = [pi.variations_of(conf_size) for pi in self.all_plotinfos]
         possible_vals = sorted(set(chain(*variations)))
-        attribute_vals = [avp.val for avp in plot_info.find_attributes(conf_size)]
-        # create a avp with (Attribute, hex_of_size) for each value
+        # might have the same measure twice (1m/1m configs), so we need to filter that out
+        attributes = set(plot_info.find_attributes(conf_size))
+        attribute_vals = [avp.val for avp in attributes]
+        # create a avp with (Attribute, size) for each value
         avps = [self._get_size_data(curr_val, possible_vals) for curr_val in attribute_vals]
         return avps
 

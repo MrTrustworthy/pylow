@@ -55,6 +55,7 @@ class PlotInfo:
         return col_names
 
     def find_attributes(self, attribute: Attribute) -> List[AVP]:
+        # might return the same attribute twice eg. if it's both in column and rows (1m/1m configs)
         all_attributes = chain(self.x_coords, self.y_coords, self.x_seps, self.y_seps, self.additional_data)
         return [avp for avp in all_attributes if avp.attr == attribute]
 
@@ -100,13 +101,23 @@ class PlotInfo:
         """ Returns the data that is supposed to be drawn in a fitting format
         """
         x, y, color, size = self.column_names
+        # x and y might be the same for 1m/1m configs, data then contains only 3 keys
         data = {
             x: self.get_coord_values('x'),  # default value for 0d0m_xd1m configs
             y: self.get_coord_values('y'),  # default value for xd1m_0d0m configs
             color: [avp.val for avp in self.colors],
             size: [avp.val for avp in self.sizes]
         }
+
+        self._check_data(data)
         return data
+
+    @staticmethod
+    def _check_data(data: Dict[str, List[Any]]) -> None:
+        amounts = list(len(data[attr]) for attr in data.keys())
+        if not min(amounts) == max(amounts):
+            lengths = {k: len(v) for k, v in data.items()}
+            raise ValueError(f'Columns not of the same length: {lengths}')
 
     def __repr__(self):
         xvals = [x.val for x in self.x_coords]
