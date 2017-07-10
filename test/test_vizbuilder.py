@@ -64,7 +64,7 @@ def check_html(viz_config, infos) -> None:
     # check for glyph amounts
     colname: str = ''
     try:
-        colname = viz_config.last_column.col_name
+        colname = viz_config.x_data.col_name
     except NoSuchAttributeException:
         pass
     glyph_amounts = [len(d[colname]) for d in data]

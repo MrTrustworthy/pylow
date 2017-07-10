@@ -58,10 +58,6 @@ class VizConfig:
         return vc
 
     @property
-    def columns_and_rows(self) -> List[Attribute]:
-        return self.columns + self.rows
-
-    @property
     def columns(self) -> List[Attribute]:
         return self._columns
 
@@ -78,45 +74,25 @@ class VizConfig:
         return unique_list(self.find_attrs(chain(self.columns, self.rows, [self.color, self.size]), Measure))
 
     @property
-    def column_dimensions(self) -> List[Dimension]:
-        return self.find_attrs(self.columns, Dimension)
-
-    @property
-    def row_dimensions(self) -> List[Dimension]:
-        return self.find_attrs(self.rows, Dimension)
-
-    @property
-    def column_measures(self) -> List[Measure]:
-        return self.find_attrs(self.columns, Measure)
-
-    @property
-    def row_measures(self) -> List[Measure]:
-        return self.find_attrs(self.rows, Measure)
-
-    @property
-    def all_attrs(self):
-        return list(chain(self.dimensions, self.measures))
-
-    @property
-    def previous_columns(self) -> List[Attribute]:
+    def x_separators(self) -> List[Attribute]:
         if len(self.columns) == 0:
             return []
         return self.columns[:-1]
 
     @property
-    def last_column(self) -> Attribute:
+    def x_data(self) -> Attribute:
         if len(self.columns) == 0:
             raise NoSuchAttributeException('No Attributes in self.columns')
         return self.columns[-1]
 
     @property
-    def previous_rows(self) -> List[Attribute]:
+    def y_separators(self) -> List[Attribute]:
         if len(self.rows) == 0:
             return []
         return self.rows[:-1]
 
     @property
-    def last_row(self) -> Attribute:
+    def y_data(self) -> Attribute:
         if len(self.rows) == 0:
             raise NoSuchAttributeException('No Attributes in self.rows')
         return self.rows[-1]
@@ -129,13 +105,14 @@ class VizConfig:
         """ Returns a String describing the config, such as CONF_1d0m_1d1m_sizeDX_colDX_circle
         """
 
-        col = f'{len(self.column_dimensions)}d{len(self.column_measures)}m'
-        row = f'{len(self.row_dimensions)}d{len(self.row_measures)}m'
+        col = f'{len(self.find_attrs(self.columns, Dimension))}d{len(self.find_attrs(self.columns, Measure))}m'
+        row = f'{len(self.find_attrs(self.rows, Dimension))}d{len(self.find_attrs(self.rows, Measure))}m'
 
-        x_val_size = "X" if self.size not in self.columns_and_rows else ""
+        cols_and_rows = list(chain(self.columns, self.rows))
+        x_val_size = "X" if self.size not in cols_and_rows else ""
         size = f'size{type(self.size).__name__[0].upper()}{x_val_size}'
 
-        x_val_col = "X" if self.color not in self.columns_and_rows else ""
+        x_val_col = "X" if self.color not in cols_and_rows else ""
         color = f'col{type(self.color).__name__[0].upper()}{x_val_col}'
 
         mark = self.mark_type.value.glyph_name.lower()

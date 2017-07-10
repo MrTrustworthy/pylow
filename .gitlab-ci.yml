@@ -12,5 +12,5 @@ all_tests:
     - source .venv/bin/activate
     - pip install -r requirements.txt
     - python -m pytest
-    - python -m mypy --ignore-missing-imports test/test_vizbuilder.py
-    - python -m pep8 --count pylow
+    - python -m mypy test/test_vizbuilder.py
+    - python -m pep8 pylow

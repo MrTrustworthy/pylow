@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from functools import reduce
-from itertools import product
+from itertools import product, chain
 from typing import Generator, List, Tuple, Dict, Any, Union, Iterable
 
 import pytest
@@ -44,13 +44,14 @@ def _determine_glyphs_in_plot_amount(vizconfig: VizConfig) -> int:
 
     Works by multiplying the length of all not-last-in-plot dimensions in columns and rows
     """
-    color = vizconfig.color if vizconfig.color not in vizconfig.columns_and_rows else None
-    size = vizconfig.size if vizconfig.size not in vizconfig.columns_and_rows else None
+    cols_and_rows = list(chain(vizconfig.columns, vizconfig.rows))
+    color = vizconfig.color if vizconfig.color not in cols_and_rows else None
+    size = vizconfig.size if vizconfig.size not in cols_and_rows else None
     relevant_attributes = {color, size}
     if len(vizconfig.columns) > 0:
-        relevant_attributes.add(vizconfig.last_column)
+        relevant_attributes.add(vizconfig.x_data)
     if len(vizconfig.rows) > 0:
-        relevant_attributes.add(vizconfig.last_row)
+        relevant_attributes.add(vizconfig.y_data)
     relevant_dimensions: List[Dimension] = VizConfig.find_attrs(relevant_attributes, Dimension)
     variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
     glyph_amount = reduce(lambda old, new: old * new, map(len, variations), 1)
@@ -63,7 +64,7 @@ def _determine_plot_amount(vizconfig: VizConfig) -> int:
     Works by multiplying the length of all not-last-in-plot dimensions in columns and rows
     """
 
-    relevant_attributes = vizconfig.previous_columns + vizconfig.previous_rows
+    relevant_attributes = vizconfig.x_separators + vizconfig.y_separators
     relevant_dimensions: List[Dimension] = VizConfig.find_attrs(relevant_attributes, Dimension)
     variations = [DATASOURCE.get_variations_of(d) for d in relevant_dimensions]
     plot_amount = reduce(lambda old, new: old * new, map(len, variations), 1)

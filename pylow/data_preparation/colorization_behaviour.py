@@ -38,7 +38,7 @@ class ColorizationBehaviour:
         # if color is an already existing dimension, it will work straight forward and color every glyph
         # if color is a new dimension, the aggregation will additionally split the data into (much) more glyphs
         elif isinstance(color, Dimension):
-            if color in vizconfig.columns_and_rows:
+            if color in vizconfig.columns or color in vizconfig.rows:
                 return ExistingDimensionColorizationBehaviour(vizconfig, all_plotinfos)
             else:
                 return NewDimensionColorizationBehaviour(vizconfig, all_plotinfos)

@@ -62,8 +62,8 @@ class PlotInfo:
         relevant_values = [avp.val for avp in self.find_attributes(attribute)]
         return list(set(relevant_values))
 
-    def would_be_in_same_plot(self, other: 'PlotInfo') -> bool:
-        return self.x_seps == other.x_seps and self.y_seps == other.y_seps
+    def is_in_plot_of(self, other_x_seps: List[AVP], other_y_seps: List[AVP]) -> bool:
+        return self.x_seps == other_x_seps and self.y_seps == other_y_seps
 
     def get_axis_label(self, x_or_y: str) -> str:
         """ Returns the 'last' x or y dimension value this plot is split by"""

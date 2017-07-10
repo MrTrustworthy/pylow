@@ -32,21 +32,22 @@ class PlotInfoBuilder:
 
         Will not return an object but rather put it into the plotinfo_cache
         """
-        find_index = config.all_attrs.index
+        dims_and_measures = list(chain(config.dimensions, config.measures))
+        find_index = dims_and_measures.index
         x_coords: List[AVP] = []  # default value, in case no values are there
         y_coords: List[AVP] = []  # default value, in case no values are there
 
         try:
-            x_coords = [plot_data[find_index(config.last_column)]]
+            x_coords = [plot_data[find_index(config.x_data)]]
         except NoSuchAttributeException:
             pass
         try:
-            y_coords = [plot_data[find_index(config.last_row)]]
+            y_coords = [plot_data[find_index(config.y_data)]]
         except NoSuchAttributeException:
             pass
 
-        x_seps = [plot_data[find_index(col)] for col in config.previous_columns]
-        y_seps = [plot_data[find_index(col)] for col in config.previous_rows]
+        x_seps = [plot_data[find_index(col)] for col in config.x_separators]
+        y_seps = [plot_data[find_index(col)] for col in config.y_separators]
 
         # gather additional data that is not used for X/Y placement of glyphs (eg. for colors and sizes)
         used_indicies = set(find_index(col) for col in config.rows + config.columns)
@@ -59,15 +60,14 @@ class PlotInfoBuilder:
 
         # create new object and determine if there are already fitting existing objects
         # TODO FIXME: Determine this without creating a new PlotInfo object for each
-        new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour, size_behaviour)
-        existing_plotinfos = list(filter(lambda ppi: ppi.would_be_in_same_plot(new_plotinfo), plotinfo_cache))
+        existing_plotinfos = list(filter(lambda ppi: ppi.is_in_plot_of(x_seps, y_seps), plotinfo_cache))
 
         if len(existing_plotinfos) == 0:
+            new_plotinfo = PlotInfo(x_coords, y_coords, x_seps, y_seps, additional_data, col_behaviour, size_behaviour)
             # use the new object
             log('PlotInfoBuilder_class', f'Created a new PlotInfo object as {new_plotinfo}')
             plotinfo_cache.append(new_plotinfo)
         elif len(existing_plotinfos) == 1:
-            log('PlotInfoBuilder_class', f'Extending existing PlotInfo object with {new_plotinfo}')
             # use an existing object and discard the newly created one
             existing = existing_plotinfos[0]
             existing.x_coords.extend(x_coords)

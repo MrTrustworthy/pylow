@@ -1,11 +1,11 @@
 from collections import defaultdict
 from itertools import chain
-from typing import Dict, List, Union, Iterable
+from typing import Dict, List, Union, Iterable, Any
 
 from numpy import number
 from pandas.core.groupby import DataFrameGroupBy
 
-from pylow.data.attributes import Measure
+from pylow.data.attributes import Measure, Attribute
 from pylow.data.datasource import Datasource
 from pylow.data.vizconfig import VizConfig
 from pylow.data_preparation.avp import AVP
@@ -110,7 +110,10 @@ class Aggregator:
     def _get_assigned_data(self, data: Dict[Iterable[str], List[Number]]) -> List[List[AVP]]:
         out = []
         for key_tuple, val_list in data.items():
-            vals = [AVP(a, v) for a, v in zip(self.config.all_attrs, chain(key_tuple, val_list))]
+            dims_and_measures: Iterable[Attribute] = chain(self.config.dimensions, self.config.measures)
+            # FIXME check typing here
+            keys_and_vals: Iterable[Any] = chain(key_tuple, val_list)
+            vals = [AVP(a, v) for a, v in zip(dims_and_measures, keys_and_vals)]
             out.append(vals)
         return out
 
