@@ -1,3 +1,4 @@
+from datapylot.data.vizconfig import VizConfig
 from datapylot.data_preparation.colorization_behaviour import *
 
 
