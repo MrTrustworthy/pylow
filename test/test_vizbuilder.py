@@ -42,7 +42,8 @@ def check_html(viz_config, infos) -> None:
     plots = [ref for ref in references if ref['type'] == 'Plot']
     glyphs = [ref for ref in references if ref['type'] == viz_config.mark_type.value.glyph_name]
     renderers = [ref for ref in references if ref['type'] == 'GlyphRenderer']
-    assert len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']
+    if not (len(plots) == len(renderers) == len(glyphs) == infos['plot_amount']):
+        import pdb; pdb.set_trace()
 
     column_datasources = [ref for ref in references if ref['type'] == 'ColumnDataSource']
     data = [ref['attributes']['data'] for ref in column_datasources]

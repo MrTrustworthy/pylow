@@ -67,14 +67,16 @@ class Aggregator:
         Amount of columns and rows and min/max values (including buffer for displaying) for X and Y axes
         """
         self.ncols = self._calculate_ncols(data)
-        self.nrows = len(data) // self.ncols
+        self.nrows = len(data) // max(self.ncols, 1)
         self._update_min_max_values(data, 'x')
         self._update_min_max_values(data, 'y')
         min_max = f'[x: ({self.x_min}/{self.x_max}) | y: ({self.y_min}/{self.y_max})]'
         log(self, f'Updated data meta information with {self.ncols} cols, {self.nrows} rows and min/max of {min_max}')
 
     def _update_min_max_values(self, data: List['PlotInfo'], axis: str) -> None:
-        # calculate min and max x_values
+        """ Calculates the min and max x- and y_values of the plots for later reference by the plotter.
+        """
+
         _min_attr, _max_attr = f'{axis}_min', f'{axis}_max'
         vals = [avp.val for pi in data for avp in getattr(pi, f'{axis}_coords')]
         if len(vals) == 0:

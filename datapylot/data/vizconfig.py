@@ -101,6 +101,18 @@ class VizConfig:
     def find_attrs(iterable: Iterable[Attribute], attr_class: Type[T]) -> List[T]:
         return [attr for attr in iterable if isinstance(attr, attr_class)]
 
+    def is_valid_config(self) -> bool:
+        try:
+            if isinstance(self.x_data, Measure):
+                return True
+        except NoSuchAttributeException:
+            try:
+                if isinstance(self.y_data, Measure):
+                    return True
+            except NoSuchAttributeException:
+                pass
+        return False
+
     def __repr__(self) -> str:
         """ Returns a String describing the config, such as CONF_1d0m_1d1m_sizeDX_colDX_circle
         """

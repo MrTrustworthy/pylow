@@ -85,8 +85,15 @@ class ExistingDimensionColorizationBehaviour(ColorizationBehaviour):
         possible_vals = sorted(set(chain(*variations)))
         attribute_vals = [avp.val for avp in plot_info.find_attributes(conf_color)]
 
+        # if this dimension is a plot separator, there might only be one value -> extend the list to match the amount
+        amount = len(plot_info.get_coord_values('x'))
+        if len(attribute_vals) < amount:
+            assert len(attribute_vals) == 1
+            attribute_vals *= amount
+
         # create a avp with (Attribute, hex_of_color) for each value
         avps = [AVP(conf_color, ALL_COLORS[possible_vals.index(curr_val)]) for curr_val in attribute_vals]
+
         return avps
 
 
@@ -124,7 +131,7 @@ class MeasureColorizationBehaviour(ColorizationBehaviour):
         variations = [pi.variations_of(conf_color) for pi in self.all_plotinfos]
         possible_vals = sorted(set(chain(*variations)))
         # might have the same measure twice (1m/1m configs), so we need to filter that out
-        attributes = set(plot_info.find_attributes(conf_color))
+        attributes = list(plot_info.find_attributes(conf_color))  # TODO set?
         attribute_vals = [avp.val for avp in attributes]
         # create a avp with (Attribute, hex_of_color) for each value
         avps = [self._get_color_data(curr_val, possible_vals) for curr_val in attribute_vals]

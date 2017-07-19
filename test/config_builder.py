@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from functools import reduce
 from itertools import product, chain
-from typing import Generator, List, Tuple, Dict, Any, Union, Iterable
+from typing import Generator, List, Tuple, Dict, Any, Union, Iterable, Set
 
 import pytest
 
@@ -16,7 +16,7 @@ Config = Tuple[VizConfig, ConfigInfo]
 ConfigAttribute = Union[List[Attribute], MarkType]
 
 
-def get_configs(filtering=None) -> List[Config]:
+def get_configs(filtering=None) -> Iterable[Config]:
     all_configs = list(_build_configs())
     if filtering is not None:
         def filter_func(vc: Config) -> bool:
@@ -90,11 +90,13 @@ def _get_possible_permutations() -> Tuple[List[str], List[Iterable[ConfigAttribu
     """ Contains the lists of possible options for a plot and combines them in all possible ways
     """
     col_dim_combs = [[], [Dimension('Category')], [Dimension('Category'), Dimension('Region')]]
-    row_dim_combs = [[], [Dimension('Ship Mode')], [Dimension('Ship Mode'), Dimension('Region')]]
-    col_measure_combs = [[], [Measure('Quantity')]]
+    row_dim_combs = [[], [Dimension('Segment')], [Dimension('Ship Mode'), Dimension('Region')]]
+    col_measure_combs: List[List[Attribute]] = [[]]  # , [Measure('Quantity')]]
     row_measure_combs = [[], [Measure('Quantity')]]
-    colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Measure('Profit')]
-    sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('Segment'), Measure('Profit')]
+    colors = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Dimension('Segment'),
+              Measure('Profit')]
+    sizes = [None, Dimension('Region'), Measure('Quantity'), Dimension('State'), Dimension('Segment'),
+             Measure('Profit')]
     marks = [MarkType.CIRCLE]
 
     # generate permutations
@@ -104,9 +106,29 @@ def _get_possible_permutations() -> Tuple[List[str], List[Iterable[ConfigAttribu
     return attribute_order, list(permuations)
 
 
+def _filter_duplicates(confs: Iterable[Config]) -> Generator[Config, None, None]:
+    """ Filters out duplicates that have been created by the permutation process
+    """
+    existing_names: Set[str] = set()
+    for conf in confs:
+        if str(conf[0]) not in existing_names:
+            existing_names.add(str(conf))
+            yield conf
+
+
+def _filter_invalids(confs: Iterable[Config]) -> Generator[Config, None, None]:
+    """ Filters out configs that have no displayable values
+    """
+    for conf in confs:
+        if conf[0].is_valid_config():
+            yield conf
+
+
 # Use regex to limit testing to the configurations currently relevant while developing
 # TODO can we make this depend on a pytest argument? then we could set up CI to test more specific stuff
 configs = get_configs()
+
+configs = _filter_duplicates(_filter_invalids(configs))
 
 # Pytest parameterized decorator to iterate over all possible configurations in testing
 # This object is the main export of this test class and used in other testing code

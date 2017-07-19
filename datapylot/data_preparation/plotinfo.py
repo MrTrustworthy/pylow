@@ -108,7 +108,6 @@ class PlotInfo:
             color: [avp.val for avp in self.colors],
             size: [avp.val for avp in self.sizes]
         }
-
         self._check_data(data)
         return data
 
