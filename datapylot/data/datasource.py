@@ -1,9 +1,9 @@
-from typing import Callable, Optional, Union, List, Any
+from typing import Callable, Optional, Union, List, Any, Dict
 
 import pandas
 from pandas.core.groupby import DataFrameGroupBy
 
-from datapylot.data.attributes import Attribute, Dimension
+from datapylot.data.attributes import Attribute, Dimension, Measure
 from datapylot.logger import log
 
 
@@ -13,6 +13,13 @@ class Datasource:
         self.data = data
         self._add_noc()
         log(self, 'Init Datasource')
+
+    @property
+    def columns(self) -> Dict[str, str]:
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        mapping = lambda dtype: 'Measure' if str(dtype) in numerics else 'Dimension'
+        output = {col: mapping(self.data[col].dtype) for col in self.data.columns}
+        return output
 
     def add_column(self, name: str, formula: Callable) -> None:
         self.data[name] = formula(self.data)

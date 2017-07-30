@@ -1,0 +1,65 @@
+/* Prevent the text contents of draggable elements from being selectable. */
+[draggable] {
+    user-select: none;
+}
+
+.attribute {
+    height: 30px;
+    width: 100%;
+    float: left;
+    border: 2px solid #666666;
+    margin-right: 5px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: move;
+}
+
+.attribute header {
+    color: #fff;
+    text-shadow: #000 0 1px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.Dimension {
+    background-color: chocolate;
+}
+
+.Measure {
+    background-color: cyan;
+}
+
+.attribute.over {
+    border: 2px dashed #000;
+}
+
+.dropArea {
+    height: 200px;
+    width: 100%;
+    float: left;
+    border: 2px solid #666666;
+    background-color: #fff;
+}
+
+div#datasource {
+    width: 15%;
+    height: 100%;
+    float: left;
+    background-color: aliceblue;
+}
+
+div#dropzone {
+    width: 15%;
+    height: 100%;
+    float: left;
+    background-color: darkgray;
+}
+
+div#plotcontainer {
+    width: 60%;
+    height: 100%;
+    float: left;
+    background-color: cornflowerblue;
+}
