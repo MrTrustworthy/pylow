@@ -3,8 +3,9 @@
 (function() {
 
     function handleDragStart(e) {
-        this.style.opacity = "0.4";
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.dropEffect = 'copy';
+
         e.dataTransfer.setData('elementid', this.id);
     }
 
@@ -34,7 +35,12 @@
 
         // Set the source column's HTML to the HTML of the column we dropped on.
         let draggedElement = document.getElementById(e.dataTransfer.getData('elementid'));
+        draggedElement = draggedElement.cloneNode(true);
         this.appendChild(draggedElement);
+
+        // allow for further dnd'ing
+        draggedElement.addEventListener('dragstart', handleDragStart, false);
+
 
         // remove previous existing labels for the column name
         let existing = draggedElement.querySelector("[name='" + draggedElement.id + "_target']");
@@ -53,6 +59,12 @@
         draggedElement.style.opacity = "1.0";
 
         return false;
+    }
+
+    function handleDropDelete(){
+        if (e.stopPropagation) {
+            e.stopPropagation(); // Stops some browsers from redirecting.
+        }
     }
 
 

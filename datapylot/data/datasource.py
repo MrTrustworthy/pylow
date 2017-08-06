@@ -8,7 +8,6 @@ from datapylot.logger import log
 
 
 class Datasource:
-
     def __init__(self, data: pandas.DataFrame) -> None:
         self.data = data
         self._add_noc()
@@ -16,8 +15,13 @@ class Datasource:
 
     @property
     def columns(self) -> Dict[str, str]:
+        """ Returns all available column headers with the associated data type
+        """
         numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-        mapping = lambda dtype: 'Measure' if str(dtype) in numerics else 'Dimension'
+
+        def mapping(dtype):
+            return 'Measure' if str(dtype) in numerics else 'Dimension'
+
         output = {col: mapping(self.data[col].dtype) for col in self.data.columns}
         return output
 

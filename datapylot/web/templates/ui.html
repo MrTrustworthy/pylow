@@ -6,6 +6,12 @@
     <link rel='stylesheet' type='text/css' href='static/ui.css'>
     <script src='static/ui.js'></script>
 
+    <!-- Bokeh -->
+    <link
+        href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.css"
+        rel="stylesheet" type="text/css">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.js"></script>
+    {{ bokeh_script|safe }}
 </head>
 <body>
 
@@ -25,7 +31,7 @@
 
 
     <div id='dropzone'>
-        <form action='/recalculate' method='POST'>
+        <form action='/' method='POST'>
 
             <div id='columns_data' class='dropArea'>Rows</div>
             <div id='rows_data' class='dropArea'>Columns</div>
@@ -37,7 +43,7 @@
     </div>
 
     <div id='plotcontainer'>
-        hello
+        {{ bokeh_div|safe }}
     </div>
 
 </body>
