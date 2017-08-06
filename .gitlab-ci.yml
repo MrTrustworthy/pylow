@@ -23,4 +23,4 @@ deploy:
     - chmod +x .venv/bin/activate
     - source .venv/bin/activate
     - pip install -r requirements.txt
-    - gunicorn --bind 0.0.0.0:8282
+    - nohup gunicorn --bind 0.0.0.0:8282 datapylot.web.plotserver:app &
